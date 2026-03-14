@@ -1,0 +1,9 @@
+node_modules/
+.env
+.env.*
+dist/
+build/
+*.log
+.cortex/
+ai/logs/cortex-execution.jsonl
+ai/logs/.trace

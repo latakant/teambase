@@ -1,0 +1,15 @@
+{
+  "score": "N/A",
+  "note": "Run /cert-verify after first code",
+  "last_updated": "2026-03-14",
+  "sessions": 0,
+  "domains": {
+    "security": "N/A",
+    "financial_integrity": "N/A",
+    "type_safety": "N/A",
+    "concurrency": "N/A",
+    "error_handling": "N/A",
+    "queue_reliability": "N/A",
+    "db_health": "N/A"
+  }
+}
