@@ -1,12 +1,14 @@
 # TEAMBASE — Principal Architect Context Brief
-# CORTEX v11.0 · SaaS / Multi-tenant Platform
-# Last verified: 2026-03-14
+# CORTEX v12.0 · SaaS / Multi-tenant Platform
+# Last verified: 2026-03-15
 
 ## 0. SNAPSHOT
 
 B2B SaaS platform · Multi-tenant · Organizations + Members + Plans + Billing
-Stack: NestJS 10 · Prisma · TypeScript · BullMQ · Next.js 15 · React 19 · Tailwind 4
-Status: Pre-build · Score: N/A → ALLOW · Cortex governed
+Repos: teambase-api (:8080) · teambase-web (:3000)
+Stack: Spring Boot 3.4 · Java 21 · Maven · JPA/Hibernate · Flyway · PostgreSQL 16
+       React Router v7 (Remix) · React 19 · Tailwind 4 · TypeScript 5
+Status: Scaffolded · Score: N/A → ALLOW · Cortex governed
 
 ---
 
@@ -57,9 +59,20 @@ Idempotency via ProcessedWebhookEvent. Failed payment → SUSPENDED not CANCELLE
 ## 4. CODING STANDARDS
 
 Follow `ai/core/SYSTEM_LAWS.md` — all 7 laws apply.
-TypeScript: no `any` · explicit return types · interface for shapes
-NestJS: Controller → Service → Prisma · DTOs with class-validator
-Multi-table ops: always `$transaction` · Errors: P2002→409 · P2025→404
+
+**Backend (Spring Boot):**
+- Controller → Service → Repository (JPA) — no business logic in controllers
+- DTOs with Bean Validation (`@Valid`) on all inputs
+- Multi-table ops: always `@Transactional` · DataIntegrityViolation → 409 · EntityNotFound → 404
+- Entities: UUID PKs (VARCHAR 36) · `@CreationTimestamp` / `@UpdateTimestamp`
+- No `@Entity` in controller responses — always map to DTOs
+
+**Frontend (React Router v7):**
+- File-based routing under `app/routes/`
+- Loaders for data fetching · Actions for mutations
+- Tailwind 4 utility classes only — no custom CSS unless unavoidable
+- `services/*.client.ts` → `apiClient` for all API calls
+- Auth token key: `teambase_token`
 
 ---
 
@@ -74,7 +87,7 @@ Multi-table ops: always `$transaction` · Errors: P2002→409 · P2025→404
 
 ## 6. GOVERNANCE
 
-CORTEX v11.0 governs all AI work.
+CORTEX v12.0 governs all AI work.
 Every session: `/cert-session` · Every commit: `/cert-commit`
 Score: N/A → ALLOW (run `/cert-verify` after first code)
 Domain adapters: `saas-subscriptions` · `saas-organizations`
