@@ -1,5 +1,5 @@
 # TEAMBASE — Principal Architect Context Brief
-# CORTEX v12.0 · SaaS / Multi-tenant Platform
+# CORTEX v14.1 · SaaS / Multi-tenant Platform
 # Last verified: 2026-03-15
 
 ## 0. SNAPSHOT
@@ -87,7 +87,7 @@ Follow `ai/core/SYSTEM_LAWS.md` — all 7 laws apply.
 
 ## 6. GOVERNANCE
 
-CORTEX v12.0 governs all AI work.
+CORTEX v14.1 governs all AI work.
 Every session: `/cert-session` · Every commit: `/cert-commit`
 Score: N/A → ALLOW (run `/cert-verify` after first code)
 Domain adapters: `saas-subscriptions` · `saas-organizations`
