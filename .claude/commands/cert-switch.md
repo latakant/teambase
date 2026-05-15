@@ -77,7 +77,7 @@ Output exactly:
 ```
 Load [project name] context and replace current session context?
 
-  → yes   — switch now, run /cert-session for [project name]
+  → yes   — switch now, run /start for [project name]
   → no    — stay in current context, do not switch
   → diff  — show full CLAUDE.md before deciding
 ```
@@ -91,7 +91,7 @@ Do not assume "yes". Do not start coding. Just wait.
 
 If human says **yes**:
 1. Acknowledge: "Switched to [project name]. Running session orientation…"
-2. Immediately execute `/cert-session` for the new project context.
+2. Immediately execute `/start` for the new project context.
 3. Store the new project root in `~/.claude/cortex-last-project` (via Bash tool).
 
 If human says **no**:

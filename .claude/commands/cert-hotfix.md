@@ -14,10 +14,12 @@
 ║               ║ - Add new features or refactor (scope: bug fix only) ║
 ║               ║ - Skip TypeScript check                             ║
 ║               ║ - Push to remote without explicit user approval     ║
-║ REQUIRES      ║ - MASTER-v11.3.md loaded                            ║
+║ REQUIRES      ║ - MASTER-v*.md loaded                               ║
 ║               ║ - Symptom described by user                         ║
 ║ ESCALATES     ║ - Schema change needed → HARD HALT → PA Phase 2    ║
-║               ║ - Can't reproduce → PARTIAL (provide repro steps)  ║
+║               ║ - Can't reproduce in unit test → route to           ║
+║               ║   /cert-load-test (race/concurrency) or             ║
+║               ║   /cert-staging (env-specific) — not PARTIAL        ║
 ║               ║ - Fix breaks other tests → HARD HALT               ║
 ║ OUTPUTS       ║ - Surgical code fix                                 ║
 ║               ║ - FIX_LOG entry                                     ║
@@ -71,7 +73,18 @@ it('should [expected behavior]', async () => {
 })
 ```
 
-If you cannot write a failing test → the bug is not understood. Do not fix it. Output PARTIAL with repro instructions.
+If you cannot write a failing test → diagnose why before choosing path:
+
+```
+Cannot reproduce because...          → Route to
+────────────────────────────────────────────────────────
+race condition / concurrency bug     → /cert-load-test (load test env)
+only happens in production env       → /cert-staging (live env check)
+non-deterministic / timing-sensitive → /cert-load-test
+logic bug but can't isolate it yet   → go back to STEP 1 — read more code
+```
+
+Do NOT output PARTIAL and proceed. A fix without reproduction is a guess — it will fail in production and you will be back here again.
 
 ---
 

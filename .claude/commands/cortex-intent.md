@@ -1,5 +1,5 @@
 ╔══════════════════════════════════════════════════════════════════════╗
-║  CORTEX  /cortex-intent  |  v1.0  |  TIER: 1  |  BUDGET: LEAN     ║
+║  CORTEX  /cortex-intent  |  v1.1  |  TIER: 1  |  BUDGET: LEAN     ║
 ╠═══════════════╦══════════════════════════════════════════════════════╣
 ║ LAYER SCOPE   ║ ALL layers (coordinator)                            ║
 ║ AUTHORITY     ║ ORCHESTRATOR                                        ║
@@ -30,6 +30,39 @@ Parse from $ARGUMENTS:
 - `--auto` — skip confirmation, run chain immediately (use only for simple single-engine tasks)
 - `--design-only` — resolve to Design Engine only, skip dev
 - `--dry-run` — output engine chain but do not run any skill
+
+---
+
+## STEP 0.5 — Vector-less RAG Retrieval
+
+Before classifying, retrieve relevant skills and adapter knowledge from the corpus.
+
+Run:
+```bash
+node /c/luv/Cortex/scripts/retrieve.js "[user's request]" --top=5 --json
+```
+
+Read the JSON output. For each result:
+- `type=skill` → note the skill name — it may belong in the engine chain
+- `type=adapter` → **load that adapter file now** — it contains domain laws for this task
+
+Example: query "add auth endpoint" returns `dev-backend-auth` (adapter) and `cert-feature` (skill).
+Action: read `adapters/stack/typescript/backend/nestjs/dev-backend-auth.md` before Step 1.
+
+**Rules:**
+- Only act on results with score > 2.0 — below that is noise
+- If top result is a skill you wouldn't have thought of, add it to the chain in Step 2
+- If retrieve.js is not found, skip silently — do not block execution
+- This step adds context only — it does not override the routing table in Step 2
+
+Output at end of this step:
+```
+RETRIEVED CONTEXT
+─────────────────────────────────────────────────────
+Skills surfaced: [list or "none above threshold"]
+Adapters loaded: [list or "none above threshold"]
+─────────────────────────────────────────────────────
+```
 
 ---
 

@@ -9,7 +9,7 @@
 ║               ║ - Write ai/lifecycle/LAYER_LOG.md (DOCS)            ║
 ║ CANNOT        ║ - Change logic while adding docs                    ║
 ║               ║ - Create separate .md doc files                     ║
-║ REQUIRES      ║ - MASTER-v11.3.md loaded                            ║
+║ REQUIRES      ║ - MASTER.md loaded                            ║
 ║ OUTPUTS       ║ - JSDoc comments on public methods                  ║
 ║               ║ - Completion block: COMPLETE                        ║
 ╚═══════════════╩══════════════════════════════════════════════════════╝
@@ -84,6 +84,33 @@ async create(
 3. `@param` only when the parameter name is ambiguous
 4. No `@returns` for simple types — only for complex shapes
 5. Never explain the code — explain the business decision
+
+---
+
+## CODEMAP FRESHNESS
+
+After every `/cortex-docs` run, write a freshness timestamp:
+
+```bash
+node -e "
+const fs=require('fs');
+const state={
+  last_scan: new Date().toISOString(),
+  scope: process.argv[1]||'changed-files',
+  files_documented: parseInt(process.argv[2])||0
+};
+fs.mkdirSync('ai/state',{recursive:true});
+fs.writeFileSync('ai/state/codemap-freshness.json',JSON.stringify(state,null,2));
+console.log('Codemap freshness updated: '+state.last_scan);
+" -- "${SCOPE}" "${FILE_COUNT}"
+```
+
+**Freshness rules (read by `/start` and `cert-verify`):**
+- ≤ 7 days → fresh — no warning
+- 8–14 days → WARN: "Codemap may be stale — run /cortex-docs to refresh"
+- > 14 days → FLAG: "Codemap is stale — documentation may not reflect current code"
+
+`cert-verify` Phase 4 checks this file and surfaces the warning if stale.
 
 ---
 

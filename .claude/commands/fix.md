@@ -13,6 +13,31 @@ The route is always visible. The system is never a black box.
 
 $ARGUMENTS — error description, module name, or symptom (required)
 
+## SCHEMA
+
+```yaml
+skill: fix
+version: "1.2"
+input:
+  $ARGUMENTS:
+    type: string
+    required: true
+    description: "Error description, module name, or symptom"
+    validation: "Must contain error signal (message|trace|status) OR location signal (module|file|endpoint)"
+    min_signals: 1
+output:
+  type: action
+  format: "completion block: /fix complete → ran: cert-bug | [outcome]"
+  feeds_into:
+    - cert-bug
+runtime:
+  tier: 1
+  budget: LEAN
+  temperature: 0
+  token_class: LOW
+  delegates_to: cert-bug
+```
+
 ---
 
 ## EXECUTION

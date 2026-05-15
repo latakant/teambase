@@ -256,7 +256,7 @@ Endpoints: N | Models: N | Test files: N | Est. lines of code: N
 
 ## PHASE 8 — AUTO-CONFIGURE CORTEX
 
-Based on detected business type, update `ai/core/MASTER-v11.3.md`:
+Based on detected business type, update `ai/core/MASTER.md`:
 
 ```
 PROJECT_TYPE: <detected type>
@@ -301,7 +301,7 @@ DETAIL: /cortex-discover complete — [business_type], [N] endpoints, [N] models
 
 ---
 
-## Completion block (MASTER-v11.3.md)
+## Completion block (MASTER.md)
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -148,7 +148,23 @@ If `ai/reports/` doesn't exist → create it.
 
 ---
 
-## STEP 6 — Update QA state + route
+## STEP 6 — Docker teardown (if Docker was used for E2E)
+
+If Docker was used to run E2E tests (i.e., a `docker compose` stack was started for this test run):
+
+```bash
+# Run from the project root that has docker-compose.yml
+docker compose down
+```
+
+**Rule:** Always kill Docker after any E2E run — pass or fail.
+The stack has served its purpose. Leaving it running wastes resources and causes port conflicts on the next run.
+
+**Exception:** Skip only if actively debugging a specific failure IN THIS SAME SESSION and need to inspect live container logs or re-run a subset of tests immediately.
+
+---
+
+## STEP 7 — Update QA state + route
 
 Update `ai/state/qa-state.json`:
 ```json

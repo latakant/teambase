@@ -10,7 +10,7 @@
 ║ CANNOT        ║ - Modify any source code                            ║
 ║               ║ - Run git operations                                ║
 ║               ║ - Create or delete files (only append/update)       ║
-║ REQUIRES      ║ - MASTER-v11.3.md loaded                            ║
+║ REQUIRES      ║ - MASTER.md loaded                            ║
 ║ ESCALATES     ║ - Nothing (read + append only)                     ║
 ║ OUTPUTS       ║ - Session summary · Next session primer             ║
 ║               ║ - Completion block (COMPLETE)                       ║
@@ -117,7 +117,7 @@ Open ({N} issues)
   {top 1-2 open issues by priority}
 
 Next session — start with:
-  /cortex-session
+  /start
   {next most logical task, e.g. "then: cortex-build auth"}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
@@ -133,6 +133,6 @@ CORTEX  /cortex-end                     COMPLETE
 Session     {today}
 Commits     {N}
 Logged      LAYER_LOG · TRACKER.md · session-state.json
-Next        /cortex-session  (next session)
+Next        /start  (next session)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```

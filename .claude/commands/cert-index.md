@@ -11,7 +11,7 @@
 ║ CANNOT        ║ - Modify schema.prisma (use /cortex-migrate)        ║
 ║               ║ - Run migrations                                     ║
 ║               ║ - Push to remote                                     ║
-║ REQUIRES      ║ - MASTER-v11.3.md loaded                            ║
+║ REQUIRES      ║ - MASTER.md loaded                            ║
 ║ ESCALATES     ║ - Missing index on FK field → HIGH issue            ║
 ║               ║ - Missing index on high-traffic where clause → HIGH ║
 ║ OUTPUTS       ║ - INDEX AUDIT REPORT                                ║

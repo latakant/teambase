@@ -45,7 +45,46 @@ Read service files. For each non-trivial function:
 Compare feature registry against business type checklist (from /cortex-discover Phase 6).
 Every gap is a potential future feature to spec.
 
-### Step 5 — Write ai/app.prd.md
+### Step 5 — Write ai/contracts/requirements.md
+
+Before writing app.prd.md, write the requirements contract from what the codebase scan revealed:
+
+```markdown
+# REQUIREMENTS CONTRACT
+# project: <project name>
+# written: <today's date>
+# written-by: cert-prd
+
+## OBJECTIVE
+<inferred from module purposes and codebase scan>
+
+## SCOPE
+<list of modules found as BUILT or PARTIAL>
+- 
+
+## OUT OF SCOPE
+<modules in Current Gaps that are not planned for current phase>
+- 
+
+## ACCEPTANCE CRITERIA
+<derive from existing test coverage + key business rules found in service files>
+- [ ] 
+- [ ] 
+
+## AFFECTED MODULES
+<all modules found in scan>
+- 
+
+## CONSTRAINTS
+<inferred from external integrations + auth patterns>
+- 
+```
+
+Write to `ai/contracts/requirements.md`.
+
+---
+
+### Step 6 — Write ai/app.prd.md
 
 ```markdown
 # [Project Name] — Product Requirements Document
@@ -150,13 +189,14 @@ node scripts/lifecycle.js log --action=INSIGHT --module=cert-prd \
 
 ---
 
-## Completion block (MASTER-v11.3.md)
+## Completion block (MASTER.md)
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CORTEX  /cert-prd                       COMPLETE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-File       ai/app.prd.md {written | updated}
+Files      ai/app.prd.md {written | updated}
+           ai/contracts/requirements.md written
 Modules    {n} documented · {n} business rules captured
 Gaps       {n identified}
 Logged     LAYER_LOG (TYPE: INSIGHT) · {date}

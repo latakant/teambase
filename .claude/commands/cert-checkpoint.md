@@ -93,6 +93,90 @@ Output each checkpoint with:
 
 ---
 
+## MODE: handoff
+
+Run when context is 70%+ or before closing a session with in-flight work.
+Flushes all partial state so the next session can resume without guessing.
+
+**STEP 1 — Scan for partial state**
+```bash
+# Find any IN_PROGRESS entries (bugs started but not committed)
+grep -n "IN_PROGRESS" ai/TRACKER.md 2>/dev/null
+
+# Find uncommitted work
+git status --short
+git stash list | head -5
+```
+
+**STEP 2 — Run tsc (must pass before handoff)**
+```bash
+npx tsc --noEmit 2>&1 | tail -10
+```
+If errors exist: fix them before proceeding. A handoff with broken types is not safe.
+
+**STEP 3 — Commit all uncommitted work**
+```bash
+git add -A
+git commit -m "wip(handoff): context-limit snapshot — [module or 'session']
+
+Work in progress — not complete. Resume from ai/session/HANDOFF.md.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+```
+If nothing to commit → skip this step.
+
+**STEP 4 — Write HANDOFF.md**
+
+Write `ai/session/HANDOFF.md` (create `ai/session/` dir if needed):
+
+```markdown
+# Session Handoff — [YYYY-MM-DD HH:MM UTC]
+
+## Status at handoff
+- Git SHA: [git rev-parse --short HEAD]
+- Uncommitted at close: [YES/NO — committed in Step 3 if YES]
+- TypeScript: [PASS / N errors]
+
+## In-progress work (from TRACKER)
+[paste any IN_PROGRESS lines, or "none"]
+
+## What was being worked on
+[one paragraph: what was being tested/fixed, where in the flow, what was next]
+
+## Files modified this session
+[git diff --name-only HEAD~5..HEAD | head -20]
+
+## Next session: start here
+1. Read this file
+2. Run: `git log --oneline -5` to see what landed
+3. [exact first action — e.g. "continue cert-bug on auth/refresh — fix is in api-client.ts line 112"]
+4. Run: `npx tsc --noEmit` to confirm clean state
+```
+
+**STEP 5 — Update TRACKER**
+
+If any IN_PROGRESS entries exist in TRACKER, mark them as INCOMPLETE (not lost):
+```
+[YYYY-MM-DD] INCOMPLETE — [module] — context limit reached mid-fix — resume from ai/session/HANDOFF.md
+```
+Remove the IN_PROGRESS line for the same module.
+
+**Output:**
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CORTEX  /cert-checkpoint handoff       COMPLETE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Committed  [SHA] — wip(handoff): [module]
+TypeScript PASS
+HANDOFF.md ai/session/HANDOFF.md written
+Resume     next session → read HANDOFF.md → git log → continue
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Safe to close this session.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+---
+
 ## TYPICAL WORKFLOW
 
 ```

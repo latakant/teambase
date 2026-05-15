@@ -1,5 +1,5 @@
-<!-- Load ai/core/MASTER-v11.3.md before executing this skill -->
-Execute the full BUG: protocol from AI-MANUAL.md.
+<!-- Load ai/core/MASTER-v*.md before executing this skill -->
+Execute the full BUG: protocol.
 
 $ARGUMENTS
 
@@ -37,24 +37,58 @@ Steps — execute in strict order, do not skip any:
 
 ---
 
-**STEP 3.5 — Risk Check (surface to human BEFORE touching code)**
+**STEP 3.5 — Structural Safety Check (auto — fires before any code change)**
 
-Output this block before any code change:
+Using the root cause identified in Step 3 + files already read, output:
 
 ```
-⚠️  RISK CHECK
-─────────────────────────────────────────────────────
-Invariants affected : [list from 8 questions above, or NONE]
-Layers touched      : [e.g. L3_DTO · L4_SERVICE · L7_IMPL]
-Could break         : [what downstream could be affected, or NONE]
-Schema change       : [YES → requires migration | NO]
-PA required         : [YES — ARCH path | NO — TRIVIAL/FEATURE]
-Safe to proceed     : [YES | NEEDS REVIEW]
-─────────────────────────────────────────────────────
+STRUCTURAL CHECK — [bug id / module / symptom]
+────────────────────────────────────────────────────────
+Access Control  : [does this fix touch any guard, role, or @Public decorator?
+                   Name the specific guard/decorator. Flag if fix weakens auth]
+State Integrity : [does the fix touch a multi-table write? is $transaction present?
+                   Name the tables. Flag UNGUARDED if transaction missing]
+Side Effects    : [could this fix introduce duplicate events, retries, or double-sends?
+                   E.g. moving a mailer call — is it still queued?]
+Sensitive Data  : [does the fix change a response shape or log statement?
+                   Could it now expose tokens, OTPs, or payment secrets?]
+Invariant Match : [which CLAUDE.md §2 rule caused this bug or is at risk from the fix?
+                   State the rule. Confirm the fix restores — not weakens — it]
+────────────────────────────────────────────────────────
+Layers touched  : [e.g. L3_DTO · L4_SERVICE · L1_CONTROLLER]
+Schema change   : [YES → requires db push | NO]
+Risk: LOW ✅  → proceed to Step 4
+      MEDIUM ⚠ → proceed, add regression test for this specific risk
+      HIGH 🚫  → STOP — explain risk, wait for explicit PROCEED
 ```
 
-If `Safe to proceed: NEEDS REVIEW` → STOP. Do not write code. Explain the risk and wait for human confirmation.
-If `Safe to proceed: YES` → continue to Step 4.
+If HIGH → do not write code. Explain the structural risk and wait for human confirmation.
+
+---
+
+**STEP 3.9 — Mark in-progress + score snapshot (crash-safety — mandatory before touching any file)**
+
+First, check for an existing `IN_PROGRESS` for this same module:
+```bash
+grep "IN_PROGRESS.*\[module\]" ai/TRACKER.md 2>/dev/null
+```
+If found → **do not create a second IN_PROGRESS**. Instead read the existing line, check `git diff` to see if the previous fix was applied or not:
+- `git diff` shows the change → fix was applied but not committed. Jump to Step 7 (update TRACKER) then Step 8.7 (commit).
+- `git diff` is clean → fix was not applied. Continue from Step 4 with the existing IN_PROGRESS line as-is.
+
+If NOT found → append to `ai/TRACKER.md` under today's date:
+```
+[YYYY-MM-DD] IN_PROGRESS — [module] — [one-line: what fix is being applied]
+```
+
+Then snapshot score **before** the fix (skip silently if score-diff.js not found):
+```bash
+node $CORTEX_HOME/scripts/score-diff.js --snapshot "before [module] fix" 2>/dev/null || true
+```
+
+**Why this step exists:** If context dies between here and Step 7, the next session opens TRACKER, sees `IN_PROGRESS`, checks `git diff`, and knows exactly where to resume — no duplicate work, no lost context. Step 7 updates this line to `BUG_FIXED`. The score snapshot captures the baseline so the delta is traceable.
+
+Do not skip this step even for trivial fixes. The cost is one line. The recovery value is full.
 
 ---
 
@@ -81,10 +115,16 @@ Append to `ai/fixes/applied/FIX_LOG.md`:
 
 ---
 
-**STEP 7 — Update TRACKER**
-Append to `ai/TRACKER.md` under today's date:
+**STEP 7 — Update TRACKER + score snapshot**
+Update the IN_PROGRESS line written at Step 3.9 — replace it with BUG_FIXED:
 ```
 [YYYY-MM-DD] BUG_FIXED — [module] — [one-line description]
+```
+(Remove the IN_PROGRESS line for this module — it is now resolved.)
+
+Then snapshot score **after** the fix to capture the delta:
+```bash
+node $CORTEX_HOME/scripts/score-diff.js --snapshot "BUG_FIXED [module]" 2>/dev/null || true
 ```
 
 ---
@@ -104,7 +144,12 @@ Run: `node scripts/lifecycle.js log --action=BUG_FIXED --module=<module> --detai
 
 **STEP 8.5 — Auto-capture pattern (mandatory — never skip)**
 
-Append to `ai/learning/pending-patterns.json` inside the `"pending"` array:
+If `ai/learning/pending-patterns.json` does not exist, create it now:
+```json
+{ "pending": [] }
+```
+
+Append to the `"pending"` array:
 ```json
 {
   "captured": "<ISO 8601 timestamp>",
@@ -181,6 +226,23 @@ DETAIL: <one-line description of what was fixed>
 
 ---
 
+**STEP 8.7 — Micro-commit (crash-safety — mandatory)**
+
+Commit this fix immediately. Do not batch with other fixes.
+
+```bash
+git add -p   # stage only files changed by this fix
+git commit -m "fix(<module>): <one-line description>
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+```
+
+**Why:** Each committed fix is a recovery point. If context dies during a multi-bug session, `git log --oneline` in the next session shows exactly what landed. Uncommitted fixes are invisible to the next session.
+
+If `git add -p` is ambiguous (many unrelated changes staged), use `git add <specific-files>` instead.
+
+---
+
 **STEP 9 — Pattern intelligence check**
 - Was diagnose.js result KNOWN or UNKNOWN?
 - If UNKNOWN: run `node scripts/learn.js analyze`
@@ -191,23 +253,72 @@ DETAIL: <one-line description of what was fixed>
 
 ---
 
-## Completion block (MASTER-v11.3.md)
+## HUMAN MODE (fires if `--human` in arguments)
+
+After fix is complete, output a plain English summary:
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CORTEX  /cortex-bug                     COMPLETE
+BUG FIXED — Plain English Summary
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+What was broken:   [one sentence — what users would have experienced]
+Why it happened:   [one sentence — root cause in plain English]
+What was fixed:    [one sentence — what changed]
+Risk if not fixed: [what would have broken in production]
+Score impact:      [score before] → [score after]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+Write to: terminal + `ai/reports/human-summary.md`
+
+---
+
+## MUST-VERIFY (hard gate — fill ALL before outputting COMPLETE)
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MUST-VERIFY — fill every line before COMPLETE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+☐ TRACKER.md   IN_PROGRESS → BUG_FIXED  (paste line)
+☐ tsc          npx tsc --noEmit exit 0  (paste: "0 errors")
+☐ jest         module tests pass        (paste: "N passed")
+☐ pattern      pending-patterns.json entry appended (paste id)
+☐ FIX_LOG.md   entry appended          (paste: date + module)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+All 5 filled → COMPLETE
+Any ☐ unchecked → INCOMPLETE (resume from first unchecked item)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+## Completion block
+
+COMPLETE (all 5 verified):
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CORTEX  /cert-bug                       COMPLETE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Files      {n modified}
 Pattern    KNOWN: {name} | UNKNOWN → pending-patterns.json | NEW-PROPOSAL
+Verified   tsc ✅ · jest ✅ · TRACKER ✅ · pattern ✅ · FIX_LOG ✅
 Logged     LAYER_LOG (TYPE: FIX) · {date}
-Next       npx tsc --noEmit → /cortex-commit
+Next       /cert-commit
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+INCOMPLETE (one or more items not verified):
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CORTEX  /cert-bug                     INCOMPLETE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Still needed  {list unchecked items}
+Resume        complete the listed items then re-output this block
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
 If TypeScript check fails before fix is applied:
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CORTEX  /cortex-bug                     FAILED
+CORTEX  /cert-bug                       FAILED
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Error      TypeScript errors — fix blocked
 Cause      {tsc error summary}

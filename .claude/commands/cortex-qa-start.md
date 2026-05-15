@@ -19,6 +19,14 @@
 QA as a formal service. Runs after development is complete, before staging.
 Produces a structured test plan that can be read by QA engineer or AI agent.
 
+---
+
+## MODEL HINT
+
+This skill reads project state and generates a test plan. Use **Haiku** if available —
+plan generation is structured analysis, not heavy reasoning. Escalate to Sonnet only
+if the sprint scope is complex or multi-domain.
+
 $ARGUMENTS
 
 ---
@@ -117,6 +125,44 @@ Rules for generating test cases:
 - Money flows (payment, invoice, refund) → always P1
 - Auth flows → always P1
 - CRUD operations → P2 unless business-critical
+
+---
+
+## STEP 4.5 — Flaky test quarantine protocol
+
+Before accepting any test failure as a real failure, check if it's flaky.
+
+**Detection:** If a test fails on the first run, re-run it 3× before classifying as FAIL:
+```bash
+npx jest --testPathPattern="<failing-test>" --no-coverage 2>&1 | tail -10
+# repeat 3 times
+```
+
+**Classification:**
+- Fails all 3 → REAL FAILURE — block. Fix before proceeding.
+- Fails 1-2 of 3 → FLAKY — quarantine, do not block.
+- Passes all 3 → FALSE ALARM — intermittent env issue, not a code bug.
+
+**Quarantine procedure for flaky tests:**
+```typescript
+// In the test file:
+test.fixme(true, 'Flaky - tracked in QA-PLAN as known gap');
+// or for Playwright:
+test.fixme('Flaky - Issue #<N>');
+```
+
+Add the flaky test to the QA plan as a known gap:
+```markdown
+## Known Gaps (flaky — quarantined)
+- [ ] [test name] — flaky, passes ~[N]/3 runs. Root cause: [suspected reason]
+  → Does NOT block staging if all P1 non-flaky tests pass
+```
+
+**Repeat-each for E2E flakiness detection:**
+```bash
+npx playwright test --repeat-each=5 <test-file>
+```
+If pass rate < 80% → quarantine. If pass rate ≥ 80% → acceptable flakiness, note in QA plan.
 
 ---
 

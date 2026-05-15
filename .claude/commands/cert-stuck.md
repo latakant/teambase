@@ -1,4 +1,4 @@
-<!-- Load ai/core/MASTER-v11.3.md before executing this skill -->
+<!-- Load ai/core/MASTER.md before executing this skill -->
 Document a blocker cleanly and produce a handoff brief. STUCK is correct system behavior — never abandon a session without invoking this if the task is unresolved.
 
 $ARGUMENTS
@@ -67,7 +67,7 @@ Partial files: [list — or NONE]
 ──────────────────────────────────────────────
 ⚠️  If files are partially changed: run git diff before next attempt.
     Consider /cortex-rollback if partial changes should be discarded.
-    Start next session with /cortex-session to reload full context.
+    Start next session with /start to reload full context.
 ══════════════════════════════════════════════
 ```
 
@@ -84,7 +84,7 @@ Partial files: [list — or NONE]
 
 ---
 
-## Completion block (MASTER-v11.3.md)
+## Completion block (MASTER.md)
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -94,6 +94,6 @@ Done       Blocker documented + handoff brief written
 Skipped    {original task} — not completed
 Issues     {blocker type: BUG | ARCH | UNKNOWN}
 Logged     LAYER_LOG (TYPE: INSIGHT) · {date}
-Next       Next session: /cortex-session → resume task from handoff brief
+Next       Next session: /start → resume task from handoff brief
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```

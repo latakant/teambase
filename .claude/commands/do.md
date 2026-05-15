@@ -13,6 +13,34 @@ The route is always visible. The system is never a black box.
 
 $ARGUMENTS — free-form task description (required)
 
+## SCHEMA
+
+```yaml
+skill: do
+version: "1.2"
+input:
+  $ARGUMENTS:
+    type: string
+    required: true
+    description: "Free-form task description"
+    validation: "Must contain intent verb (fix|build|add|review|plan|refactor) AND bounded scope (module|file|feature)"
+    min_signals: 2
+output:
+  type: action
+  format: "completion block: /do complete → ran: [skill] | [outcome]"
+  feeds_into:
+    - cortex-intent
+    - cert-bug
+    - cert-verify
+    - cert-commit
+runtime:
+  tier: 1
+  budget: LEAN
+  temperature: 0
+  token_class: LOW
+  delegates_to: cortex-intent
+```
+
 ---
 
 ## EXECUTION

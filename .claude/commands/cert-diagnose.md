@@ -10,7 +10,7 @@
 ║ CANNOT        ║ - Write any fix (use /cert-bug after this)           ║
 ║               ║ - Skip Precision gate even for KNOWN patterns        ║
 ║               ║ - Proceed if Confidence is LOW without human approval║
-║ REQUIRES      ║ - MASTER-v11.3.md loaded                           ║
+║ REQUIRES      ║ - MASTER.md loaded                           ║
 ║               ║ - scripts/diagnose.js + scripts/learn.js exist      ║
 ║ OUTPUTS       ║ - KNOWN/UNKNOWN verdict · Precision gate · Next step ║
 ╚═══════════════╩══════════════════════════════════════════════════════╝

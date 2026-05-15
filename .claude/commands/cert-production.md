@@ -1,5 +1,5 @@
 ╔══════════════════════════════════════════════════════════════════════╗
-║  CERT  /cortex-production |  v8.1  |  TIER: 6  |  BUDGET: FULL    ║
+║  CERT  /cortex-production |  v8.2  |  TIER: 6  |  BUDGET: FULL    ║
 ╠═══════════════╦══════════════════════════════════════════════════════╣
 ║ LAYER SCOPE   ║ L1 · L4 · L7 · L8 · L9                             ║
 ║ AUTHORITY     ║ OBSERVER                                            ║
@@ -16,13 +16,43 @@
 ║ REQUIRES      ║ - CORTEX score >= 95                               ║
 ║               ║ - /cortex-staging must have passed first           ║
 ║ ESCALATES     ║ - Any CRITICAL check fails → NO-GO (HARD HALT)     ║
-║ OUTPUTS       ║ - GO / NO-GO / GO WITH WARNINGS verdict            ║
+║ OUTPUTS       ║ - Mode A: interactive HITL · GO / NO-GO verdict    ║
+║               ║ - Mode B: full audit checklist at once (no Q&A)    ║
 ║               ║ - Completion block: COMPLETE or HARD HALT          ║
 ╚═══════════════╩══════════════════════════════════════════════════════╝
 
 Full production readiness check. Run this once before go-live — not on
-every push. Assumes /cortex-staging already passed. Verifies all
-third-party integrations, webhooks, and ops readiness.
+every push. Requires /cortex-staging to have passed first (verified via
+checkpoint). Verifies all third-party integrations, webhooks, and ops readiness.
+
+---
+
+## PHASE 0 — STAGING GATE (mandatory first step)
+
+Read `ai/state/staging-verified.json`.
+
+If file does NOT exist:
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CORTEX  /cortex-production            HARD HALT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Blocked    /cortex-staging has not been run (no checkpoint found)
+Required   Run /cortex-staging first. It must pass (GO verdict) before
+           /cortex-production can be run.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+If file EXISTS, check `verified_at` timestamp:
+- Less than 24 hours ago → PASS — show: `✔ Staging verified: [date]`
+- More than 24 hours ago → WARN:
+  ```
+  ⚠️  Staging check is [N] hours old.
+  Environment may have changed since then.
+  Recommend re-running /cortex-staging before proceeding.
+  Type Y to continue with stale staging check, or N to re-run /cortex-staging first.
+  ```
+  - Y → proceed with warning logged
+  - N → HALT. Run /cortex-staging first.
 
 ---
 
@@ -76,6 +106,18 @@ Scan `src/` for `@sentry/` import or `SENTRY_DSN` reference.
 - PASS: found
 - FAIL: WARNING — deploying blind without error tracking
 
+**A9 — Dangerous code patterns**
+```bash
+grep -rn "eval(" src/ --include="*.ts" --include="*.tsx" 2>/dev/null | grep -v "// safe\|\.test\.\|spec\."
+grep -rn "innerHTML\s*=" src/ --include="*.ts" --include="*.tsx" 2>/dev/null
+grep -rn "\$queryRaw\|\\$executeRaw" src/ --include="*.ts" 2>/dev/null
+npm audit --audit-level=high 2>&1 | grep -E "critical|high" | head -5
+```
+- `eval(` in non-test code → BLOCKER
+- `$queryRaw` / `$executeRaw` → verify tagged template literal (safe) not string concat (BLOCKER)
+- `innerHTML =` → WARNING
+- npm audit critical/high → WARNING (log to open-issues.json)
+
 ---
 
 After automated checks, output:
@@ -92,6 +134,7 @@ PHASE 1 — AUTOMATED CHECKS [production]
   A6 Tests          ✔/⚠️  {N passed · coverage %}
   A7 Open issues    ✔/⚠️  {N critical}
   A8 Sentry         ✔/⚠️
+  A9 Code patterns  ✔/⚠️  {eval/innerHTML/queryRaw/npm audit}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Blockers: {N} — fix before proceeding
   OR
@@ -103,13 +146,125 @@ If any BLOCKER → HARD HALT. Do not proceed to Phase 2.
 
 ---
 
-## PHASE 2 — HITL CHECKS
+## PHASE 2 — MODE SELECTOR
+
+After Phase 1 passes, output:
+
+```
+─────────────────────────────────────────────
+PHASE 2 — How do you want to run HITL checks?
+─────────────────────────────────────────────
+  A  Live check    Interactive · one question at a time · deploy day
+  B  Audit plan    Full checklist printed at once · no Q&A · plan mode
+
+Type A or B:
+```
+
+- **A** → proceed to PHASE 2A (interactive HITL, one at a time)
+- **B** → proceed to PHASE 2B (full checklist output, then VERDICT)
+
+---
+
+## PHASE 2B — AUDIT CHECKLIST (Mode B)
+
+Print the entire checklist at once. No questions. Human works through it offline.
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PRODUCTION AUDIT CHECKLIST — {today}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+H1 — ENV VARS (CRITICAL — app crashes without these)
+  [ ] DATABASE_URL         set in production environment
+  [ ] JWT_SECRET           strong random value (not dev default)
+  [ ] JWT_REFRESH_SECRET   strong random value (not dev default)
+  [ ] NODE_ENV             = production
+  [ ] CORS_ORIGINS         = your live frontend domain(s)
+  [ ] RAZORPAY_KEY_ID      LIVE key (not test key)
+  [ ] RAZORPAY_KEY_SECRET  LIVE secret (not test)
+  [ ] RAZORPAY_WEBHOOK_SECRET  matches what you set in Razorpay dashboard
+  [ ] CLOUDINARY_CLOUD_NAME
+  [ ] CLOUDINARY_API_KEY
+  [ ] CLOUDINARY_API_SECRET
+
+H2 — RAZORPAY WEBHOOK (CRITICAL — orders stay PENDING without this)
+  [ ] Webhook registered in Razorpay dashboard
+  [ ] URL: https://YOUR-DOMAIN/api/payments/razorpay/webhook
+  [ ] Secret matches RAZORPAY_WEBHOOK_SECRET
+  [ ] Events enabled: payment.captured · payment.failed · refund.processed
+
+H3 — SHIPROCKET WEBHOOK (HIGH — orders never reach SHIPPED/DELIVERED without this)
+  [ ] Webhook configured in Shiprocket account
+  [ ] URL: https://YOUR-DOMAIN/api/delivery/webhook/shiprocket
+  [ ] Events: shipment_status_changed · delivered · rto
+  [ ] OR: acknowledged manual status updates until webhook is set up
+
+H4 — HEALTH ENDPOINT (HIGH — Railway health checks need this)
+  [ ] GET /api/health returns 200 in production
+  [ ] DB connection confirmed (not just app start)
+
+H5 — MSG91 OTP (HIGH — no login without this)
+  [ ] SMS_PROVIDER=msg91 (not mock)
+  [ ] Real OTP test: send + receive SMS + verify code
+  [ ] MSG91_AUTH_KEY set and active
+
+H6 — PRE-DELIVERY CHECKLIST (MEDIUM)
+  --- Financial ---
+  [ ] Order total recalculated inside transaction
+  [ ] Invoice atomic numbering
+  [ ] Coupon atomic enforcement
+  [ ] Price/Tax/Quantity CHECK constraints
+  [ ] No read-modify-write counters
+  --- Inventory ---
+  [ ] Variant stock validated + decremented
+  [ ] Expiry restores stock
+  [ ] Cancel restores stock
+  [ ] No negative stock possible
+  --- Idempotency ---
+  [ ] Order idempotent replay safe
+  [ ] Payment webhook dedup
+  [ ] Delivery webhook dedup
+  [ ] Invoice idempotent
+  --- Concurrency ---
+  [ ] Double-click checkout safe
+  [ ] Concurrent checkout safe
+  [ ] Webhook replay safe
+  [ ] Cron double-run safe
+  --- Observability ---
+  [ ] All financial mutations logged
+  [ ] No silent catch
+  [ ] Proper HTTP mapping for DB errors
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Work through these before deploy day.
+When all are checked: re-run /cortex-production → choose A (Live check).
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+After printing the checklist, output the Mode B completion block:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CORTEX  /cortex-production          AUDIT PLAN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Mode       B — Audit plan (HITL not verified interactively)
+Automated  {N}/{total} passed · {W} warnings
+Checklist  Printed — work through before deploy day
+Next       Complete checklist → re-run with Mode A on deploy day
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+Then stop. Do not run VERDICT for Mode B — no interactive confirmation was given.
+
+---
+
+## PHASE 2A — HITL CHECKS (Mode A)
 
 Ask ONE AT A TIME. Wait for response before moving on.
 
 ---
 
-### HITL-1 — All env vars (CRITICAL)
+### HITL-A1 — All env vars (CRITICAL)
 
 ```
 ─────────────────────────────────────────────
@@ -325,6 +480,7 @@ AUTOMATED
   A6 Tests           ✔/⚠️  {N passed · coverage %}
   A7 Open issues     ✔/⚠️
   A8 Sentry          ✔/⚠️
+  A9 Code patterns   ✔/⚠️
 
 HUMAN-VERIFIED
   H1 All env vars (11)  ✔/✖

@@ -12,7 +12,7 @@
 ║ CANNOT        ║ - Run npx prisma migrate dev (applies to live DB)   ║
 ║               ║ - Drop tables or columns without explicit PA signoff║
 ║               ║ - Push to remote                                     ║
-║ REQUIRES      ║ - MASTER-v11.3.md loaded                            ║
+║ REQUIRES      ║ - MASTER.md loaded                            ║
 ║               ║ - PA Phase 2 approval on schema change              ║
 ║ ESCALATES     ║ - Breaking migration (drop/rename) → HARD HALT      ║
 ║               ║ - Missing $transaction on multi-table → HARD HALT   ║
@@ -58,6 +58,39 @@ BREAKING (requires migration plan):
 
 Reply "PA APPROVED" to proceed.
 ```
+
+---
+
+## EXPAND-CONTRACT SAFETY PROTOCOL (for breaking changes)
+
+For any BREAKING migration — especially column rename, type change, or removing NOT NULL — use the expand-contract pattern:
+
+```
+STEP A — EXPAND (additive, deploy safely)
+  Add the new column/structure as optional alongside the old one.
+  Old code still works. New code can start using new column.
+
+STEP B — BACKFILL
+  Migrate existing data from old → new column.
+  Verify row counts match before proceeding.
+
+STEP C — CONSTRAIN
+  Add NOT NULL, UNIQUE, or other constraints once all rows are backfilled.
+  Run in a transaction. Verify constraint holds.
+
+STEP D — CONTRACT (remove old)
+  Drop the old column/structure.
+  Only after all code references the new column.
+  Old column removal is a separate migration + deploy.
+```
+
+**Checklist before any BREAKING migration:**
+- [ ] Is the old column still referenced in any service or query? (grep for it)
+- [ ] Is there a backfill script written and tested?
+- [ ] Can the app run with BOTH columns simultaneously during deploy?
+- [ ] Is there a verified rollback SQL if Step C or D fails?
+
+If any checkbox is unchecked → split into expand phase first, contract phase later.
 
 ---
 

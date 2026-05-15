@@ -107,8 +107,8 @@ WARN  → completion block present but missing Next: field
 
 ### 2.3 File path references correct?
 ```
-PASS  → all ai/ references use ai/core/MASTER-v11.3.md
-FAIL  → references old path ai/CORTEX-MASTER.md or ai/core/MASTER-v11.3.md or ai/core/MASTER-v11.3.md
+PASS  → all references use core/MASTER.md (no version suffix)
+FAIL  → references old path ai/CORTEX-MASTER.md or ai/core/MASTER-v14.0.md (now archived) or ai/MASTER.md
 ```
 
 ### 2.4 Skill has budget class declared?
@@ -188,10 +188,10 @@ GAP-N: Missing /skill-name
 For each core protocol file in core/:
 
 ```
-MASTER-v11.3.md          → Check: all 30 principles present?
-MASTER-v11.3.md      → Check: 4 block formats present? (RESPONSE_PROTOCOL merged)
-MASTER-v11.3.md      → Check: token budget rules present? (TOKEN_BUDGET merged)
-MASTER-v11.3.md      → Check: parallel-safe pairs listed? (EXECUTION_PROTOCOL merged)
+MASTER.md          → Check: all 30 principles present?
+MASTER.md      → Check: 4 block formats present? (RESPONSE_PROTOCOL merged)
+MASTER.md      → Check: token budget rules present? (TOKEN_BUDGET merged)
+MASTER.md      → Check: parallel-safe pairs listed? (EXECUTION_PROTOCOL merged)
 INVARIANT_PROTOCOL.md   → Check: 3 tiers with examples?
 CERTIFICATION_PROTOCOL.md → Check: 7 cert fields described?
 PA_PROTOCOL.md          → Check: PA paths 1-4 + Emergency?
@@ -282,7 +282,7 @@ Compare actual skill files against CORTEX-v8.0-BUILD-PROMPT.md:
 Output diff table:
 ```
 SKILL                  STATUS        NOTE
-/cortex-session        MATCH         cert block aligned
+/start                 MATCH         cert block aligned
 /cortex-hotfix         MISSING       not yet built from spec
 /cortex-xyz            EXTRA         on disk, not in spec
 /dev-backend-auth      DRIFT         BUDGET class differs

@@ -17,8 +17,8 @@
 
 Feature Progress Engine — shows execution state of any active feature chain.
 
-Reads from the CORTEX Orchestrator SQLite DB at localhost:7391.
-Requires: cortex-server running (`cortex-server start --bg`).
+Reads from the CORTEX Orchestrator SQLite DB at localhost:7391 when running.
+Falls back to `ai/TRACKER.md` when orchestrator is offline.
 
 $ARGUMENTS
 
@@ -56,10 +56,12 @@ If `--project` override: use that project name instead.
 
 If orchestrator is not running:
 ```
-⚠️  Orchestrator not running.
-    Start with: cortex-server start --bg
-    Then retry: /cortex-feature-status
+⚠️  Orchestrator offline — reading from local files.
 ```
+Fallback: read `ai/TRACKER.md` last 20 lines to reconstruct feature progress.
+Look for entries matching the feature name. If found, render them as the feature board
+using the same format below. Note "Source: TRACKER.md (orchestrator offline)" in the output.
+If not found in TRACKER: output "No local records found — start orchestrator for full history."
 
 ---
 

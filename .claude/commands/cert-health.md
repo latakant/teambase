@@ -13,7 +13,7 @@
 ║ CANNOT        ║ - Modify any src/ files                             ║
 ║               ║ - Run fixes (use /cortex-fix for that)              ║
 ║               ║ - Push to remote                                    ║
-║ REQUIRES      ║ - MASTER-v11.3.md loaded                            ║
+║ REQUIRES      ║ - MASTER.md loaded                            ║
 ║ ESCALATES     ║ - TypeScript errors → PARTIAL (list all errors)     ║
 ║               ║ - Test failures → PARTIAL (link to /dev-tester)     ║
 ║               ║ - Score < 85 → HARD HALT (output BLOCK)            ║

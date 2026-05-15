@@ -36,6 +36,33 @@ Parse from $ARGUMENTS:
 
 ---
 
+## STEP 0.5 — Load Language Core (ALWAYS FIRST — before framework and domain adapters)
+
+Language rules are foundations. Load them before any framework adapter.
+Framework rules layer on top. Domain rules layer last.
+
+Detect language from CLAUDE.md `Stack:` line or module list:
+
+```
+TypeScript project (any framework — NestJS · Next.js · Express · React Native · Bun · Deno):
+  → read `C:\luv\Cortex\adapters\language\typescript\core.md`
+  → extract SCAN RULES table (TS-001 through TS-007) into language_rules[]
+  → maturity = SEED → rules active
+
+Go project (any framework — Gin · net/http · Fiber):
+  → adapters/language/go/core.md is STUB → skip, no rules yet
+
+Python / Java / Dart:
+  → all STUB → skip silently
+```
+
+If language adapter is STUB or file not found → `language_rules[] = []` — continue.
+If SEED or FULL → extract rules and add to enforcement set.
+
+`language_rules[]` enters `all_patterns[]` FIRST — highest priority in the enforcement set.
+
+---
+
 ## STEP 1 — Load Patterns (Two sources — Cortex first, local second)
 
 **SOURCE 1 — Cortex adapter patterns (universal, stack + domain specific)**
@@ -57,6 +84,10 @@ Domain detection → load if exists (check CLAUDE.md §1 TOPOLOGY or module list
 
 Extract all LAW blocks and anti-pattern tables from adapter files into `adapter_patterns[]`.
 These are Cortex-sourced, pre-validated, always active. Confidence = 1.0.
+
+**Loading order enforced:**
+`all_patterns[] = language_rules[] + adapter_patterns[] + graduated[] + high_confidence[]`
+Language violations always surface first.
 
 If no adapter files found: note "No adapter patterns loaded" — continue.
 
@@ -141,14 +172,66 @@ ENFORCING: NONE
 
 ## STEP 4 — Scan (if --scan flag provided)
 
-Read recently modified files in the relevant module:
+Scan has two scan sources — **adapter rules** (structural) and **instinct rules** (project-learned).
+Both run. Neither overrides the other.
+
+### STEP 4A — Adapter SCAN RULES (always active when adapter loaded)
+
+The adapter files loaded in STEP 1 each contain a `## SCAN RULES` table.
+Load those tables now. Each row has: `rule-id | pattern | severity | catches | false-positive notes`.
+
+Get changed files:
 ```bash
-git diff --name-only HEAD 2>/dev/null | grep "src/modules/<module>"
+git diff --name-only HEAD 2>/dev/null
 # or if no git changes:
-ls src/modules/<module>/*.ts 2>/dev/null
+git diff --name-only HEAD~1 HEAD 2>/dev/null
 ```
 
-For each CRITICAL and ACTIVE instinct, scan file contents for the anti-pattern:
+For each changed file, determine which adapter applies:
+- `.controller.ts` / `.service.ts` / `.module.ts` in NestJS → apply NestJS + Prisma scan rules
+- `.tsx` / Next.js `page.tsx` / `services/*.service.ts` → apply Next.js scan rules
+- Files matching both → apply both
+
+For each FAIL-severity rule in the table: run the grep pattern against the file.
+For each WARN-severity rule: run the grep pattern, flag as advisory.
+
+**Output per violation:**
+```
+🔴 VIOLATION — [rule-id]  (FAIL)
+   File:    [path]:[line]
+   Found:   [matched text]
+   Catches: [what this rule detects]
+   Fix:     [correct pattern from the LAW]
+   Action:  Fix before commit → /cert-fix "[violation description]"
+
+⚠  WARNING  — [rule-id]  (WARN)
+   File:    [path]:[line]
+   Found:   [matched text]
+   Risk:    [what could go wrong]
+   Fix:     [correct pattern]
+```
+
+**Output per clean file:**
+```
+✅ [rule-id] — no violation in [file]
+```
+
+**Summary line:**
+```
+ADAPTER SCAN: [N] FAIL violations · [N] WARN advisories · [N] files clean
+```
+
+If FAIL violations found → state clearly:
+```
+SCAN BLOCKED — [N] adapter rule violation(s) must be fixed before proceeding.
+```
+
+---
+
+### STEP 4B — Instinct scan (local project-learned patterns)
+
+Using active `local_instincts[]` from STEP 1, scan for known project-specific patterns.
+Legacy reference table (always included regardless of instinct list):
 
 | Instinct | What to grep for |
 |----------|-----------------|
@@ -158,15 +241,9 @@ For each CRITICAL and ACTIVE instinct, scan file contents for the anti-pattern:
 | `shiprocket-webhook-signature` | webhook handler methods missing HMAC verification |
 | `prisma-queryraw-typed-interface` | `$queryRaw` without explicit return type interface |
 
-For each violation found:
-```
-🔴 VIOLATION DETECTED — [instinct-id]
-   File:    src/modules/<module>/<file>.ts
-   Line:    ~[N]
-   Pattern: [what was found]
-   Fix:     [prescribed fix from instinct]
-   Action:  Fix this before proceeding → /cert-fix "[violation description]"
-```
+For each active instinct with a detectable pattern (from instincts.json `pattern` field if present):
+- Run the grep
+- Report violation using same format as STEP 4A
 
 For clean files:
 ```
@@ -198,6 +275,37 @@ Violation of an ACTIVE guardrail  = warn + suggest fix.
 
 ---
 
+## STEP 6 — Structural Safety Check (auto — runs every time)
+
+Using context already loaded in Steps 1–5 (patterns, CLAUDE.md, instincts), output:
+
+```
+STRUCTURAL CHECK — [module | scope of upcoming change]
+────────────────────────────────────────────────────────
+Access Control  : [read actual controller file — are guards present on every non-public route?
+                   Name the specific guards or flag MISSING if absent]
+State Integrity : [read actual service file — are multi-table writes inside $transaction?
+                   Name the specific operations or flag UNGUARDED if not]
+Side Effects    : [could this produce duplicate events, retry loops, or double-sends?
+                   Check queue usage — flag if inline instead of queued]
+Sensitive Data  : [any risk of secrets/tokens appearing in logs or API responses?
+                   Check logger.log() calls and response shapes]
+Invariant Match : [which rules from CLAUDE.md §2 CRITICAL BUSINESS RULES apply here?
+                   State the rule and whether this change respects or risks it]
+────────────────────────────────────────────────────────
+Risk: LOW ✅  → proceed
+      MEDIUM ⚠ → proceed, add inline comment flagging the risk
+      HIGH 🚫  → STOP — type PROCEED to override with explicit reason
+```
+
+**Precision rule:** Each line must contain a specific finding from reading actual files — not a generic question.
+Wrong: `Access Control: might be missing`
+Right: `Access Control: JwtAuthGuard present on all routes except POST /contact (@Public correct)`
+
+If no code exists yet (greenfield): base check on the contract defined so far.
+
+---
+
 ## Completion Block
 
 ```
@@ -212,3 +320,18 @@ VIOLATIONS: [N found | NONE]
 NEXT:       cert-build | cert-fix | cert-feature
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
+
+---
+
+## MUST-VERIFY (before declaring /cert-enforce complete)
+
+```
+☐ STEP 0.5 — Language rules loaded: "TS-001..TS-011 loaded (11 rules)" OR "[lang] not TypeScript — skip"
+☐ STEP 1   — Active adapters listed: at least one framework adapter named
+☐ STEP 2   — Instincts loaded: "[N] instincts loaded" (0 is valid if none exist)
+☐ STEP 3   — Violations table shown OR "VIOLATIONS: NONE"
+☐ STEP 4   — Completion block rendered with ADVISORY + VIOLATIONS + NEXT
+```
+
+If VIOLATIONS > 0: do not proceed to cert-verify. Fix violations first.
+If any box cannot be checked → the step did not run — diagnose before proceeding.

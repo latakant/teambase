@@ -54,7 +54,7 @@ Update `ai/learning/skill-usage.json`:
 
 ---
 
-## Completion block (MASTER-v11.3.md)
+## Completion block (MASTER.md)
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

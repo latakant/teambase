@@ -10,7 +10,7 @@
 ║ CANNOT        ║ - Write production code (use design-layout for page)║
 ║               ║ - Modify src/ files directly                        ║
 ║               ║ - Override design rules without stated reason       ║
-║ REQUIRES      ║ - MASTER-v11.3.md loaded                           ║
+║ REQUIRES      ║ - MASTER.md loaded                           ║
 ║               ║ - adapters/design/patterns.md loaded               ║
 ║ OUTPUTS       ║ - Section structure · copy · component list        ║
 ╚═══════════════╩══════════════════════════════════════════════════════╝

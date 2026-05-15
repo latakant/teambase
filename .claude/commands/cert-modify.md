@@ -1,4 +1,4 @@
-<!-- Load ai/core/MASTER-v11.3.md and ai/memory/team-roles.md before executing this skill -->
+<!-- Load ai/core/MASTER-v*.md and ai/memory/team-roles.md before executing this skill -->
 Execute the full MODIFY: protocol — changing existing feature behaviour.
 
 $ARGUMENTS
@@ -64,8 +64,21 @@ If **DB schema change** or **payment/auth/webhook change**: STOP. This is ARCH p
 Present your findings and wait for explicit "approved" before continuing.
 
 If **breaking API contract** (removing a field, changing a type, renaming an endpoint):
-- Confirm the frontend (exena-web or exena-admin) does not depend on the old contract
-- Present the breaking change clearly before proceeding
+
+Run these greps to confirm frontend does not depend on the old contract:
+```bash
+# 1. Find DTO imports in frontend — TypeScript types flow through imports, not endpoint names
+grep -r "import.*ResponseDto\|import.*RequestDto\|import.*\.dto" ../exena-web/src/ ../exena-admin/src/ 2>/dev/null | grep -i "[module-name]"
+
+# 2. Find direct field references in frontend service/hooks
+grep -r "\.[field-being-removed]\b\|\.[field-being-changed]\b" ../exena-web/src/ ../exena-admin/src/ 2>/dev/null
+
+# 3. Find endpoint usage by path
+grep -r '"[/api/path]"\|`[/api/path]`' ../exena-web/src/ ../exena-admin/src/ 2>/dev/null
+```
+
+If any match → list affected frontend files and present the breaking change before proceeding.
+If no match → confirm safe and note the grep output as evidence.
 
 ---
 
@@ -142,7 +155,7 @@ DETAIL: <one-line: old behaviour → new behaviour>
 
 ---
 
-## Completion block (MASTER-v11.3.md)
+## Completion block
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

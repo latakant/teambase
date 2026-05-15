@@ -80,7 +80,7 @@ The following are already HIGH confidence for Exena:
 
 ---
 
-## Completion block (MASTER-v11.3.md)
+## Completion block (MASTER.md)
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

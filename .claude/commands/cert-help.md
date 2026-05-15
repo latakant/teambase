@@ -1,5 +1,5 @@
 ╔══════════════════════════════════════════════════════════════════════╗
-║  CERT  /cert-help  |  v11.2  |  TIER: 15  |  BUDGET: LEAN          ║
+║  CERT  /cert-help  |  v21.0  |  TIER: 15  |  BUDGET: LEAN          ║
 ╠═══════════════╦══════════════════════════════════════════════════════╣
 ║ LAYER SCOPE   ║ L1                                                  ║
 ║ AUTHORITY     ║ ANALYST                                             ║
@@ -25,19 +25,17 @@ $ARGUMENTS
 ## FULL CATALOG
 
 ```
-CORTEX v11.2 — SKILL CATALOG
+CORTEX v21.0 — SKILL CATALOG
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Use this as your map. Every skill has one job. Find the right one first.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ━━ 1. SESSION ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  /cert-session      Full context load → score → open items → brief
+  /start             Full context load → score → open items → brief (replaces /cert-session)
   /cert-status       Quick score + blockers only (no full context)
   /cert-enforce      Load graduated instincts → block known mistakes before code
-  /cert-roles        Classify work type + set active role (analyst/builder/etc)
-  /cert-start        Lightweight session start (smaller projects)
   /cert-switch       Controlled handoff to a different project context
-  /cert-end          Close session → log → queue next tasks
+  /end               Close session → log → queue next tasks
   /cert-help         This catalog. Always available.
   /cert-checkpoint   Save progress mid-session for long orchestrations
 
@@ -96,9 +94,8 @@ Use this as your map. Every skill has one job. Find the right one first.
   /cert-gate         Per-task gate inside orchestration (runs after each DAG node)
   /cert-review       Code review — style, types, security, logic
   /cert-security     Security deep review — OWASP + auth + webhooks + secrets
-  /cert-audit        Full governance audit → score all 7 domains
+  /cert-score --full Full governance audit → score all 7 domains (use --full flag)
   /cert-eval         Eval-driven dev for AI features (define evals first)
-  /cert-predict      Pre-commit risk score — pattern + instinct check
   /cert-spec         Spec compliance — PRD criteria mapped to tests
   /cert-secrets      Scan codebase for hardcoded secrets
   /cert-shield       Harden a module (rate-limit + auth + validation pass)
@@ -137,8 +134,6 @@ Use this as your map. Every skill has one job. Find the right one first.
   /cert-diagnose     Diagnose a bug using pattern library + instincts first
   /cert-enforce      (also in Session) — enforce instincts pre-code
   /cert-report       Founder brief + developer workload + system health
-  /cert-stocktake    Full inventory: endpoints + models + coverage + domain gaps
-  /cert-lifecycle    Log a lifecycle event manually (when auto-log didn't fire)
   /cert-meta         Meta-analysis: skill usage stats + session patterns
   /cert-runtime      Production feedback loop → Sentry errors → instinct updates
   /cert-assign       Assign work items to roles + track ownership
@@ -172,10 +167,9 @@ Use this as your map. Every skill has one job. Find the right one first.
   /cert-diagram       Update the living architecture diagram after a change
   /cert-handoff       Generate a structured handoff document between agents
   /cert-init          Validate environment + project identity at startup
-  /cert-report-bug    Report a framework bug to the Cortex project
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Total: ~114 skills across cert· cortex· dev· ecom· adapter namespaces
+Total: 125 active skills across cert· cortex· dev· ecom· adapter namespaces
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
@@ -185,28 +179,28 @@ Total: ~114 skills across cert· cortex· dev· ecom· adapter namespaces
 
 ```
 ━━ NEW FEATURE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-/cert-session → /cert-enforce → /cert-feature "[description]"
+/start → /cert-enforce → /cert-feature "[description]"
   (cert-feature auto-generates task graph + orchestrates for FEATURE path)
 → /cert-commit
 
 ━━ QUICK FIX (1-2 files) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-/cert-session → /cert-fix → /cert-verify → /cert-commit
+/start → /cert-fix → /cert-verify → /cert-commit
 
 ━━ BUG WITH UNKNOWN CAUSE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-/cert-session → /cert-diagnose [requestId] → /cert-fix → /cert-verify → /cert-commit
+/start → /cert-diagnose [requestId] → /cert-fix → /cert-verify → /cert-commit
 
 ━━ FULL FEATURE (backend + frontend) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-/cert-session → /cortex-intent "build [X]"
+/start → /cortex-intent "build [X]"
 → [CONFIRM] → /cert-orchestrate graph → /cert-commit
 
 ━━ SCHEMA CHANGE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-/cert-session → /dev-backend-schema → /cert-migrate → /cert-verify → /cert-commit
+/start → /dev-backend-schema → /cert-migrate → /cert-verify → /cert-commit
 
 ━━ PRE-LAUNCH ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 /cert-prelaunch → /cert-env → /cert-security → /cert-staging → [GO] → /cert-production
 
 ━━ WEEKLY HEALTH ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-/cert-audit → /cert-learn → /cert-stocktake → /cert-report
+/cert-score --full → /cert-learn → /cert-report
 ```
 
 ---
@@ -217,7 +211,7 @@ Total: ~114 skills across cert· cortex· dev· ecom· adapter namespaces
 SITUATION                         SKILL
 ────────────────────────────────  ────────────────────────────────────
 Don't know which skill to use   → /cortex-intent "[your request]"
-Starting a new session          → /cert-session
+Starting a new session          → /start
 Not sure what the bug is        → /cert-diagnose [requestId]
 Fixing a known issue            → /cert-fix
 Adding a feature                → /cert-feature "[description]"
@@ -233,15 +227,15 @@ Working on orders module        → /ecom-orders (load first)
 Working on payments module      → /ecom-payments (load first)
 Complex task, 3+ files          → /cert-orchestrate "[task]"
 Long feature, resumable         → /cortex-task-graph feature "[name]"
-Score dropped below 95          → /cert-audit → fix blockers → /cert-verify
+Score dropped below 95          → /cert-score --full → fix blockers → /cert-verify
 ```
 
 ---
 
 ## Onboarding Path
 
-1. **Read** `ai/core/MASTER-v11.3.md` — once (the full constitution)
-2. **Run** `/cert-session` — see current project state + score
+1. **Read** `ai/core/MASTER.md` — once (the full constitution)
+2. **Run** `/start` — see current project state + score
 3. **Run** `/cert-enforce` — know which instincts are active this session
 4. **Try** a small fix: `/cert-fix` → `/cert-verify` → `/cert-commit`
 5. **Learn the flow** above — it covers 80% of daily work

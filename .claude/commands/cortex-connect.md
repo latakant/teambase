@@ -45,7 +45,7 @@ PRINCIPLE 6 — SESSION BUDGET AWARENESS
   Tier 3 (ARCH path only): ARCHITECTURE_MEMORY · DEPENDENCY_MEMORY · full diagrams
 ```
 
-Full protocol: `core/MASTER-v11.3.md` (TOKEN_BUDGET merged into MASTER)
+Full protocol: `core/MASTER.md` (TOKEN_BUDGET merged into MASTER)
 
 ---
 

@@ -81,7 +81,7 @@ Cannot continue until PA approves.
 
 ---
 
-## Completion block (MASTER-v11.3.md)
+## Completion block (MASTER.md)
 
 ### If spec updated:
 ```

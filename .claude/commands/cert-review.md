@@ -18,6 +18,13 @@ Focused code review gate. Reads only changed files. Checks against
 coding standards, invariants, security rules, and domain patterns.
 Run after /cortex-verify, before /cortex-commit.
 
+---
+
+## MODEL HINT
+
+This skill reads and reasons about code. Use **Sonnet** — semantic analysis of code patterns requires it.
+Do not downgrade to Haiku for this skill; false negatives on CRITICAL issues are costly.
+
 $ARGUMENTS
 
 Parse from $ARGUMENTS:
@@ -129,6 +136,25 @@ For each changed file, read the full diff and check the rules below.
 | SEC2 | Webhook handlers verify HMAC signature first | grep for `createHmac` before processing |
 | SEC3 | File uploads validate MIME type and size | grep for `mimetype` check in upload handlers |
 | SEC4 | User input is validated via DTO before reaching service | no raw `req.body` in services |
+
+### CODE QUALITY RULES (all files)
+
+These are WARN-level — flag but do not block. Flag as HIGH in `strict` mode.
+
+| # | Rule | Threshold | Check |
+|---|------|-----------|-------|
+| Q1 | Function length | > 50 lines | Count lines in any single function |
+| Q2 | File length | > 800 lines | Count total lines in changed file |
+| Q3 | Nesting depth | > 4 levels | Check if/for/try nesting depth |
+| Q4 | `console.log` in non-test files | Any | grep for `console.log\|console.error` in src/ |
+| Q5 | TODO/FIXME introduced | Any | grep for `TODO\|FIXME\|HACK` in diff |
+| Q6 | Commented-out code blocks | 3+ lines | Look for large `//` or `/* */` blocks |
+
+Flag code quality issues with:
+```
+WARN  [Q1] src/modules/orders/orders.service.ts:45
+  Function `processOrder` is 87 lines — consider extracting sub-steps.
+```
 
 ### TEST RULES (*.spec.ts)
 

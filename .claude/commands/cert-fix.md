@@ -113,7 +113,35 @@ DETAIL: [ISSUE-ID] closed: <what was fixed>
 
 ---
 
-## Completion block (MASTER-v11.3.md)
+## Cycle Mode — close the learning loop (add `--cycle` to activate)
+
+After the fix is verified, immediately close the learning loop on the pattern captured in
+`ai/learning/pending-patterns.json` without running the full `/cert-learn` 10-step cycle.
+
+**Step C1 — Read what cert-bug captured**
+Find the most-recent entry in `pending-patterns.json` (`captured` timestamp).
+Note: `root_cause_category`, `module`, `fix_pattern`, `verification.status`.
+If `verification.status = FAIL` → skip graduation, output: `⚠️ Fix verification FAIL — pattern flagged unreliable.`
+
+**Step C2 — Check for prior matches**
+Count entries in `pending-patterns.json` with same `root_cause_category` + `module`.
+Also check `ai/learning/instincts.json` and `scripts/diagnose.js` for the same trigger.
+
+**Step C3 — Act on match result**
+- Already in `diagnose.js` → `✅ KNOWN PATTERN — already graduated. No action.`
+- In `instincts.json` → increment `confidence +0.1`, `evidence_count +1`, update `last_triggered`
+- 1–2 prior matches → add instinct entry with `confidence: 0.4`, `graduated: false`
+- 3+ matches AND confidence ≥ 0.8 → run `node scripts/learn.js promote [pattern-id]`
+  → Output: `🎓 PATTERN GRADUATED — [id] — future occurrences resolve in ~30s`
+
+**Step C4 — Backlog check**
+If `pending-patterns.json` has 5+ unreviewed entries → `⚠️ Run /cert-learn now.`
+
+When to use `--cycle`: any bug that took >5 min to diagnose. Patterns earned through real debugging are the most valuable thing Cortex learns.
+
+---
+
+## Completion block (MASTER.md)
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

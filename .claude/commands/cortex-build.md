@@ -1,5 +1,6 @@
 # /cortex-build — Domain Skeleton Generator
 # CORTEX v11.3 | cert-* = governance · cortex-* = domain builders
+<!-- LOOP_CAPABLE: true | LOOP_STEP: executing | LOOP_INVARIANTS: I-01, I-02, I-03 | LOOP_DOMAIN: (from scaffold target) -->
 
 ---
 

@@ -12,7 +12,7 @@
 ║               ║ - Modify schema.prisma                              ║
 ║               ║ - Add new features during refactor                  ║
 ║               ║ - Proceed if tests fail before refactor starts      ║
-║ REQUIRES      ║ - MASTER-v11.3.md loaded                            ║
+║ REQUIRES      ║ - MASTER.md loaded                            ║
 ║               ║ - Green test suite BEFORE refactor begins           ║
 ║ ESCALATES     ║ - Tests fail after refactor → HARD HALT             ║
 ║               ║ - Contract change needed → HARD HALT                ║
@@ -25,7 +25,76 @@ Safe structural refactor — extract, rename, reorganize. Behavior must be ident
 
 $ARGUMENTS
 
-Parse: `target` (required) — file path, function name, or module · `type` — `extract` | `rename` | `split` | `inline` | `reorder`
+Parse: `target` (required) — file path, function name, or module · `type` — `extract` | `rename` | `split` | `inline` | `reorder` | `dead-code`
+
+---
+
+## MODEL HINT
+
+This skill modifies code structurally. Use **Sonnet** for all refactor types.
+`dead-code` mode runs analysis tools and is read-heavy first — Haiku acceptable for the scan phase only.
+
+---
+
+## DEAD CODE MODE (`type=dead-code`)
+
+If `type=dead-code`, skip to this section. All other `type` values use the standard flow below.
+
+### Phase D1 — Scan
+
+Run dead code analysis tools (use whichever is available):
+
+```bash
+# TypeScript / JavaScript (preferred order)
+npx knip 2>&1          # Unused exports, files, dependencies
+npx depcheck 2>&1      # Unused npm dependencies
+npx ts-prune 2>&1      # Unused TypeScript exports
+
+# Python
+vulture src/ 2>&1
+
+# Go
+deadcode ./... 2>&1
+```
+
+If none are available: grep for exports with zero imports manually.
+
+### Phase D2 — Categorize findings (SAFE / CAUTION / DANGER)
+
+| Tier | Examples | Action |
+|------|----------|--------|
+| **SAFE** | Unused utilities, test helpers, internal functions | Delete with confidence |
+| **CAUTION** | Components, API routes, middleware | Verify no dynamic imports or external consumers first |
+| **DANGER** | Config files, entry points, type definitions | Investigate before touching — skip if uncertain |
+
+Before deleting CAUTION items: search for dynamic imports (`import()`, `require()`, `__import__`) and string references (route names in configs).
+
+### Phase D3 — Safe deletion loop
+
+For each **SAFE** item, one at a time:
+1. Run tests → establish baseline (all green)
+2. Delete the item
+3. Re-run tests → verify nothing broke
+4. If tests fail → `git checkout -- <file>` immediately, skip this item
+5. If tests pass → move to next
+
+Never delete without tests passing first. Never delete more than one item before re-running tests.
+
+### Phase D4 — Summary
+
+```
+Dead Code Cleanup
+──────────────────────────────
+Deleted:   [N] unused exports/functions
+           [N] unused files
+           [N] unused dependencies
+Skipped:   [N] items (CAUTION/DANGER or test failure)
+Lines:     ~[N] removed
+──────────────────────────────
+All tests passing ✅
+```
+
+Then continue to `/cert-commit`.
 
 ---
 

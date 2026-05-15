@@ -25,7 +25,7 @@ Design Engine — converts feature intent into UX intelligence.
 
 Before any frontend code is written, reason about the user experience first.
 This skill executes the full UX reasoning pipeline:
-  intent → engine classification → screen mapping → UX flow → states → components → tokens
+  intent → aesthetic load → engine classification → screen mapping → UX flow → states → components → tokens
 
 References:
 - 7 Product Engines: Identity · Discovery · Decision · Transaction · Fulfillment · Engagement · Growth
@@ -40,6 +40,48 @@ Parse from $ARGUMENTS:
 - `actor <who>` — customer | admin | seller | tailor | driver (who uses this UI)
 - `--component-only` — skip UX flow, output component map only
 - `--flow-only` — output UX journey only, skip component/token design
+
+---
+
+## STEP 0 — CORTEX RUNTIME GUARD
+
+Run: `node scripts/runtime-guard.js cortex-design`
+- Exit 0 → proceed to PHASE 0
+- Exit 1 → WARN (PHASE_MISMATCH). Ask: "Phase mismatch detected. Continue? (YES to proceed)"
+  - YES → run: `node scripts/runtime-guard.js cortex-design --confirmed` → PHASE 0
+  - Anything else → STOP
+- Exit 2 → HALT — do not proceed
+
+---
+
+## PHASE 0 — Aesthetic Load (ALWAYS FIRST)
+
+Before any design reasoning, load the project's visual identity:
+
+```
+AESTHETIC LOAD
+─────────────────────────────────────────────────────
+Step 1: Check for DESIGN.md in project root
+  → If found: load it. This is the primary aesthetic source.
+    Extract: color palette · typography · component styles · spacing · shadows
+    Note source: DESIGN.md ([inspiration: e.g. Airbnb / Stripe / custom])
+
+  → If not found: fall back to adapters/design/design-aesthetic.md
+    Note: "No DESIGN.md found — using Cortex generic aesthetic. Consider running:
+    cp [design-md-source]/DESIGN.md [project-root]/DESIGN.md"
+
+Step 2: Extract the 5 critical tokens for this session:
+  Primary color:    [hex]
+  Background:       [hex]
+  Text primary:     [hex]
+  Border radius:    [value]
+  Shadow:           [value]
+
+Step 3: All token references in Phase 8 (Design Tokens) must use these values.
+  Do not invent colors. Do not use Tailwind defaults if DESIGN.md specifies exact values.
+─────────────────────────────────────────────────────
+AESTHETIC SOURCE: [DESIGN.md (Airbnb) | DESIGN.md (Stripe) | design-aesthetic.md (generic)]
+```
 
 ---
 
@@ -239,7 +281,8 @@ Auth required?
 
 ## PHASE 8 — Design Tokens
 
-Identify token needs for this screen (do not invent values — flag as TBD if not in design system):
+Identify token needs for this screen. Use values from DESIGN.md if loaded (Phase 0).
+Do not invent values — use exact hex/values from aesthetic source or flag as TBD:
 
 ```
 DESIGN TOKENS — [Screen Name]

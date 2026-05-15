@@ -9,7 +9,7 @@
 ║               ║ - Write ai/lifecycle/LAYER_LOG.md (HANDOFF)         ║
 ║ CANNOT        ║ - Modify src/ files                                 ║
 ║               ║ - Share live .env values                            ║
-║ REQUIRES      ║ - MASTER-v11.3.md loaded                            ║
+║ REQUIRES      ║ - MASTER.md loaded                            ║
 ║               ║ - PA approval (read-full justification)             ║
 ║ OUTPUTS       ║ - HANDOFF.md — complete project handoff package     ║
 ║               ║ - Completion block: COMPLETE                        ║

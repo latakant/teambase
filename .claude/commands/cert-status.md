@@ -1,5 +1,28 @@
 Quick CORTEX status check — read only, no code changes.
 
+## SCHEMA
+
+```yaml
+skill: cert-status
+version: "1.0"
+input:
+  $ARGUMENTS:
+    type: string
+    required: false
+    description: "None expected — status is always a full system view"
+    default: null
+output:
+  type: report
+  format: "structured status block: score + domain breakdown + issues + blockers + next action"
+  feeds_into: []
+runtime:
+  tier: 1
+  budget: LEAN
+  temperature: 0
+  token_class: LOW
+  read_only: true
+```
+
 **1.** Read `ai/state/current-score.json`
 **2.** Read `ai/state/open-issues.json`
 **3.** Read `ai/STATUS.md` — Open Blockers + Next Action sections only
@@ -30,7 +53,7 @@ If score differs from `current-score.json`, note the delta and ask the user if t
 
 ---
 
-## Completion block (MASTER-v11.3.md)
+## Completion block (MASTER.md)
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -196,12 +196,24 @@ Note: Third-party integrations not checked — run /cortex-production before go-
 ## COMPLETION BLOCKS
 
 If GO:
+
+Write checkpoint to `ai/state/staging-verified.json`:
+```json
+{
+  "verified_at": "[ISO timestamp]",
+  "verdict": "GO",
+  "checks_passed": "[N/total]",
+  "session_date": "[today]"
+}
+```
+
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CORTEX  /cortex-staging                 COMPLETE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Verdict    GO ✔  — ready for testing
 Checks     {N}/{total} passed
+Checkpoint ai/state/staging-verified.json written
 Next       Test your features · run /cortex-production before go-live
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```

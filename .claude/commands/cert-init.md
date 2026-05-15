@@ -7,7 +7,7 @@ Read only: ai/VERSION.md (3 lines) before starting.
 Do NOT load ai/ files to validate them — use `ls` and `head -1` only.
 Full file reads only if a specific problem is found (not upfront).
 Self-build rule: if creating missing files, write from memory template — do not read existing files as reference.
-Budget protocol: ai/core/MASTER-v11.3.md (TOKEN_BUDGET merged)
+Budget protocol: ai/core/MASTER.md (TOKEN_BUDGET merged)
 
 $ARGUMENTS
 
@@ -64,10 +64,10 @@ Auto-create `ai/learning/pending-patterns.json` if missing — it starts with `{
 |------|---------|
 | `ai/STATUS.md` | must exist |
 | `ai/AI-MANUAL.md` | must exist |
-| `ai/core/MASTER-v11.3.md` | must exist |
-| `ai/core/MASTER-v11.3.md (TOKEN_BUDGET merged)` | must exist |
-| `ai/core/MASTER-v11.3.md` | EXECUTION_PROTOCOL merged here |
-| `ai/core/MASTER-v11.3.md` | RESPONSE_PROTOCOL merged here |
+| `ai/core/MASTER.md` | must exist |
+| `ai/core/MASTER.md (TOKEN_BUDGET merged)` | must exist |
+| `ai/core/MASTER.md` | EXECUTION_PROTOCOL merged here |
+| `ai/core/MASTER.md` | RESPONSE_PROTOCOL merged here |
 | `ai/lifecycle/LAYER_LOG.md` | must exist |
 | `ai/lifecycle/SPEC_LOG.md` | must exist |
 | `ai/fixes/applied/FIX_LOG.md` | must exist |
@@ -116,14 +116,14 @@ Enterprise checker:  ✅ score [X]  |  ❌ broken — run /cortex-audit  |  not 
 Status: READY  |  NOT READY — [n] issues found
 
 Next:
-  ✅ All clear → run /cortex-session to begin
+  ✅ All clear → run /start to begin
   ❌ Issues found → resolve items above first, then run /cortex-init again
 ══════════════════════════════════════════════
 ```
 
 ---
 
-## Completion block (MASTER-v11.3.md)
+## Completion block (MASTER.md)
 
 ### If READY:
 ```
@@ -133,7 +133,7 @@ CORTEX  /cortex-init                    COMPLETE
 Status     READY — all checks passed
 Issues     NONE
 Logged     {not logged — read-only validation}
-Next       /cortex-session to begin development
+Next       /start to begin development
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 

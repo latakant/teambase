@@ -26,8 +26,11 @@ Note the 4 maturity metrics. Record the baseline before any changes.
 Run: `node scripts/learn.js analyze`
 This scans diagnoses with no matching pattern and generates proposals in `ai/learning/pattern-proposals.md`.
 
-Also read: `ai/learning/pending-patterns.json`
-Find all entries where `"promoted": false`. These are reactive captures from `/cortex-bug` and `/dev-debugger` that need review. Include them in the proposals list for Step 3.
+Check `ai/learning/pending-patterns.json`:
+- If the file does NOT exist → create it now: `{ "pending": [] }` — output: `Initialized pending-patterns.json (first cycle)`
+- If it exists → read it and find all entries where `"promoted": false`
+
+These are reactive captures from `/cert-bug` and `/dev-debugger` that need review. Include them in the proposals list for Step 3.
 
 ---
 
@@ -82,6 +85,38 @@ Proposal [ID]: [description]
 - clearly environment-specific → recommend Skip
 
 Ask the user which proposals to promote before running Step 4.
+
+---
+
+**STEP 3.5 — Quality gate before promotion**
+
+For each user-approved proposal, self-evaluate before writing to the pattern library.
+Score each dimension 1–5. If any score is 1–2, improve the draft and re-score until all ≥ 3.
+
+| Dimension | 1 | 3 | 5 |
+|-----------|---|---|---|
+| Specificity | Abstract only, no code examples | Representative example present | Rich examples covering all usage patterns |
+| Actionability | Unclear what to do | Main steps understandable | Immediately actionable, edge cases covered |
+| Scope Fit | Too broad or narrow | Mostly appropriate | Name, trigger, and content perfectly aligned |
+| Non-redundancy | Nearly identical to existing pattern | Some overlap but unique perspective | Completely unique value |
+| Coverage | Covers only a fraction of target task | Main cases covered | Main cases, edge cases, and pitfalls covered |
+
+Show the scores table before promoting:
+```
+Quality gate — Proposal [ID]:
+  Specificity:    [N]/5  — [rationale]
+  Actionability:  [N]/5  — [rationale]
+  Scope Fit:      [N]/5  — [rationale]
+  Non-redundancy: [N]/5  — [rationale]
+  Coverage:       [N]/5  — [rationale]
+  Total:          [N]/25
+  Decision:       [PROMOTE | IMPROVE FIRST | SKIP]
+```
+
+**Save location decision:**
+- "Would this pattern be useful in a different project?" → Yes → Global pattern library
+- Project-specific only → local `ai/learning/` only
+- When in doubt → Global (easier to restrict later than to recover lost knowledge)
 
 ---
 
@@ -228,6 +263,47 @@ This closes the outcome loop:
 
 ---
 
+**STEP 9.7 — Instinct Export/Import (cross-project sharing without orchestrator)**
+
+Use when: sharing patterns between projects where the orchestrator is offline, or bootstrapping a new project with an existing project's instincts.
+
+**Export (from source project):**
+```bash
+node -e "
+const fs=require('fs');
+const inst=require('./knowledge/instincts.json');
+const exported={
+  exported_at: new Date().toISOString(),
+  source_project: require('./package.json').name,
+  instincts: inst.instincts.filter(i=>i.graduated&&i.confidence>=0.8)
+};
+fs.writeFileSync('ai/learning/instincts-export.json',JSON.stringify(exported,null,2));
+console.log('Exported',exported.instincts.length,'graduated instincts → ai/learning/instincts-export.json');
+"
+```
+
+**Import (into target project):**
+```bash
+node -e "
+const fs=require('fs');
+const target=require('./knowledge/instincts.json');
+const source=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));
+const existing=new Set(target.instincts.map(i=>i.id));
+const toAdd=source.instincts.filter(i=>!existing.has(i.id));
+target.instincts.push(...toAdd.map(i=>({...i,imported_from:source.source_project,imported_at:new Date().toISOString()})));
+fs.writeFileSync('./knowledge/instincts.json',JSON.stringify(target,null,2));
+console.log('Imported',toAdd.length,'instincts from',source.source_project);
+" -- /path/to/instincts-export.json
+```
+
+**Rules:**
+- Only import graduated instincts (confidence >= 0.8, evidence_count >= 3)
+- Imported instincts are tagged with `imported_from` — traceable to source
+- Duplicates (same id) are skipped — no overwrite
+- After import: run `node scripts/diagnose.js --patterns` to verify
+
+---
+
 **STEP 10 — Prompt for architectural decisions**
 
 If this cert-learn cycle was triggered after a major build session, prompt:
@@ -292,9 +368,45 @@ This is more precise than binary promote/skip — patterns earn their place thro
 
 ---
 
-## Hook Setup — Stop + PreCompact (Optional but recommended)
+## Hook Setup — 4 hooks for continuous quality + learning (optional but recommended)
 
-Two hooks work together to protect learning across context events:
+These hooks fire automatically — no manual invocation. Add to `~/.claude/settings.json`.
+
+**Quick benefits:**
+- `post-edit-typecheck` — catches TypeScript errors immediately after each edit (before cert-verify)
+- `suggest-compact` — suggests `/compact` at 50 tool calls, then every 25, to prevent stale context
+- `Stop` — reminds you of pending patterns at session end
+- `PreCompact` — saves state before context compaction
+
+**post-edit-typecheck hook** (PostToolUse — catch TS errors after every edit):
+```json
+{
+  "PostToolUse": [{
+    "matcher": "Edit|Write",
+    "hooks": [{
+      "type": "command",
+      "command": "node -e \"const {execFileSync}=require('child_process'),fs=require('fs'),path=require('path');try{const i=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));const f=i.tool_input&&i.tool_input.file_path;if(f&&/\\.(ts|tsx)$/.test(f)&&fs.existsSync(f)){let d=path.dirname(path.resolve(f)),depth=0;while(d!==path.parse(d).root&&depth<10&&!fs.existsSync(path.join(d,'tsconfig.json'))){d=path.dirname(d);depth++;}if(fs.existsSync(path.join(d,'tsconfig.json'))){try{execFileSync('npx',['tsc','--noEmit','--pretty','false'],{cwd:d,stdio:'pipe',timeout:20000});}catch(e){const out=(e.stdout||'')+(e.stderr||'');const rel=path.relative(d,path.resolve(f));out.split('\\n').filter(l=>l.includes(rel)||l.includes(f)).slice(0,5).forEach(l=>console.error(l));}}}}catch(e){}\" 2>/dev/null || true"
+    }]
+  }]
+}
+```
+
+**suggest-compact hook** (PreToolUse — strategic compaction suggestions):
+```json
+{
+  "PreToolUse": [{
+    "matcher": "*",
+    "hooks": [{
+      "type": "command",
+      "command": "node -e \"const fs=require('fs'),os=require('os'),path=require('path');const f=path.join(os.tmpdir(),'cortex-tool-count');let n=1;try{n=parseInt(fs.readFileSync(f,'utf8').trim())||1;n++;}catch(e){}fs.writeFileSync(f,String(n));if(n===50)console.log('[CORTEX] 50 tool calls — consider /compact if transitioning phases');else if(n>50&&(n-50)%25===0)console.log('[CORTEX] '+n+' tool calls — good checkpoint for /compact');\" 2>/dev/null || true"
+    }]
+  }]
+}
+```
+
+---
+
+## Hook Setup — Stop + PreCompact (protect learning across context events)
 
 **Stop Hook** — runs at session end, checks for pending patterns:
 **PreCompact Hook** — runs BEFORE context compaction, saves work state so nothing is lost when context resets mid-session.
@@ -345,7 +457,61 @@ Next `/cortex-learn` run will pick it up in Step 2.
 
 ---
 
-## Completion block (MASTER-v11.3.md)
+## Token + Cost Optimization (optional but recommended)
+
+Three env vars that reduce token spend by 60–70% with zero quality loss on governed workflows:
+
+```bash
+# Cap extended thinking tokens (default is unlimited — this prevents runaway costs)
+export MAX_THINKING_TOKENS=10000
+
+# Compact context at 50% full instead of 85% (prevents stale context, reduces errors)
+export CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=50
+
+# Route all subagent tasks (parallel searches, background reads) to Haiku
+export CLAUDE_CODE_SUBAGENT_MODEL="claude-haiku-4-5-20251001"
+```
+
+Add to shell profile (`~/.bashrc` or `~/.zshrc`) to apply globally.
+
+**Impact by operation type:**
+- `CLAUDE_CODE_SUBAGENT_MODEL=haiku` — saves most on parallel file reads, test runs, lint checks
+- `MAX_THINKING_TOKENS=10000` — prevents reasoning loops on structured governance tasks
+- `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=50` — prevents degraded decisions late in long sessions
+
+**When NOT to apply:**
+- Remove `MAX_THINKING_TOKENS` override for complex architectural decisions (`/cortex-plan`, `/cortex-blueprint`)
+- Remove `CLAUDE_CODE_SUBAGENT_MODEL` override when subagent quality matters (code generation, not just searches)
+
+---
+
+## Auto-approve safe operations (optional Claude Code settings.json)
+
+Add to `~/.claude/settings.json` to skip permission prompts on read-only operations.
+These are safe to auto-approve — they make no changes and cannot cause damage:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npx tsc --noEmit:*)",
+      "Bash(npx jest --no-coverage:*)",
+      "Bash(cat:*)",
+      "Bash(grep:*)"
+    ]
+  }
+}
+```
+
+**Rule:** Auto-approve only operations that: (1) make no file changes, (2) make no network calls, (3) cannot delete or overwrite anything. Reads, formatters, test runners, git status — all safe. Migrations, pushes, installs — never auto-approve.
+
+---
+
+## Completion block
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

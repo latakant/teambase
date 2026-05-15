@@ -9,7 +9,7 @@
 ║               ║ - Run /compact with summary                         ║
 ║ CANNOT        ║ - Modify source code                                ║
 ║               ║ - Auto-compact without user awareness               ║
-║ REQUIRES      ║ - MASTER-v11.3.md loaded                             ║
+║ REQUIRES      ║ - MASTER.md loaded                             ║
 ║ OUTPUTS       ║ - Compaction decision + state snapshot              ║
 ║               ║ - Completion block (COMPACT NOW or CONTINUE)        ║
 ╚═══════════════╩══════════════════════════════════════════════════════╝
@@ -147,7 +147,7 @@ and continues from `last_handoff` exactly.
 
 To verify resume state:
 ```
-/cortex-session
+/start
 ```
 This loads MASTER + session-state + DOMAIN_MEMORY and confirms what's next.
 
@@ -175,7 +175,7 @@ If auto-compact fired mid-task:
 
 ### Pattern 1: Plan → Build → Commit
 ```
-/cortex-session        (load context)
+/start        (load context)
 ... planning ...
 /cortex-prd            (plan written to file)
 → COMPACT HERE (plan is in file, context no longer needed)
@@ -218,7 +218,7 @@ CORTEX  /cortex-compact              COMPACT NOW
 Phase      {phase just completed}
 State      Saved to session-state.json
 Handoff    "{last_handoff content}"
-Next       /compact → then /cortex-session to resume
+Next       /compact → then /start to resume
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 

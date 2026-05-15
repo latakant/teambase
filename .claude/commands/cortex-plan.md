@@ -112,31 +112,34 @@ Based on chosen mode, assemble the chain:
 ```
 EXECUTION CHAIN — MODE A (Full Stack)
 ─────────────────────────────────────────────────────────────
-Step 1:  /cortex-blueprint idea "[idea]"
+Step 1:  /cortex-blueprint idea "[idea]"          [DEPENDS ON PREV]
          → domain map · law validation · phased plan · ai/blueprint.md
 
-Step 2:  /cortex-design feature "[product name]" --all-screens
+Step 2:  /cortex-design feature "[product name]" --all-screens  [DEPENDS ON PREV]
          → all 12 screen types mapped · component tree · token requirements
          → UX flow for every actor
-         Runs after Step 1. Cannot skip.
 
-Step 3:  [backend chain — one step per domain phase from blueprint]
+Step 3:  [backend chain — one step per domain phase from blueprint]  [PARALLEL OK with Step 4]
          /dev-backend-schema + /dev-backend-endpoint per module
-         Runs in parallel with Step 4 where modules are independent.
+         Independent modules can run in parallel terminals.
 
-Step 4:  [frontend chain — one step per screen from design output]
+Step 4:  [frontend chain — one step per screen from design output]   [PARALLEL OK with Step 3]
          /dev-frontend-component (leaf components first)
          /dev-frontend-page (pages after components)
          /dev-frontend-service (API service layer)
 
-Step 5:  /dev-tdd OR /dev-backend-test per domain
+Step 5:  /dev-tdd OR /dev-backend-test per domain  [PARALLEL OK across modules]
          → tests written after implementation per module
 
-Step 6:  /cert-verify
+Step 6:  /cert-verify                              [DEPENDS ON PREV — all steps must complete]
          → tsc + tests + secrets + invariants
 
-Step 7:  /cert-commit
+Step 7:  /cert-commit                              [DEPENDS ON PREV]
          → conventional commit + lifecycle log
+─────────────────────────────────────────────────────────────
+PARALLEL KEY:
+  [PARALLEL OK]      — can run alongside other steps marked [PARALLEL OK]
+  [DEPENDS ON PREV]  — must wait for all preceding steps to complete
 ─────────────────────────────────────────────────────────────
 ```
 
@@ -228,6 +231,28 @@ On CONFIRM: execute chain. On Mode B: pause at gate, wait for APPROVE.
 ## ══ PATH 2: NEW TASK ══
 
 Triggered by: `/cortex-plan task "description"`
+
+---
+
+### STEP T0 — Research & Reuse (mandatory before planning)
+
+Before planning implementation, check what already exists:
+
+1. **Search codebase first** — Does this feature/pattern already exist partially?
+   ```bash
+   grep -rn "<key-term>" src/ --include="*.ts" | head -20
+   ```
+2. **Check npm registry** — Is there a battle-tested library that solves 80%+ of this?
+   Common sources: npm, GitHub search. Prefer proven libs over hand-rolled solutions.
+3. **Check existing project patterns** — Is there a similar module already in this codebase?
+   If yes → extend the existing pattern rather than starting fresh.
+
+Output one line before proceeding:
+```
+Research: [reusing existing X | extending pattern from Y | new implementation needed]
+```
+
+If existing implementation found → skip to STEP T3-B immediately (route directly to coding skill, no design needed unless UI-facing).
 
 ---
 

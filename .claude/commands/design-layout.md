@@ -10,7 +10,7 @@
 ║ CANNOT        ║ - Generate section content (use /design-section)    ║
 ║               ║ - Write production code or src/ files               ║
 ║               ║ - Override page flow without stated reason          ║
-║ REQUIRES      ║ - MASTER-v11.3.md loaded                           ║
+║ REQUIRES      ║ - MASTER.md loaded                           ║
 ║               ║ - adapters/design/patterns.md loaded               ║
 ║ OUTPUTS       ║ - Page layout map · section order · flow rationale ║
 ╚═══════════════╩══════════════════════════════════════════════════════╝

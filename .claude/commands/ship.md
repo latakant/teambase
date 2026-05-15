@@ -13,6 +13,31 @@ The route is always visible. The system is never a black box.
 
 $ARGUMENTS — optional commit message (passed to cert-commit if provided)
 
+## SCHEMA
+
+```yaml
+skill: ship
+version: "1.1"
+input:
+  $ARGUMENTS:
+    type: string
+    required: false
+    description: "Optional commit message passed to cert-commit"
+    default: "derived from git diff"
+output:
+  type: action
+  format: "completion block: /ship complete → ran: cert-verify + cert-commit | [outcome]"
+  feeds_into:
+    - cert-verify
+    - cert-commit
+runtime:
+  tier: 1
+  budget: LEAN
+  temperature: 0
+  token_class: LOW
+  delegates_to: "cert-verify → cert-commit"
+```
+
 ---
 
 ## EXECUTION

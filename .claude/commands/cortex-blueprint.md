@@ -147,22 +147,22 @@ Save to `ai/build-constraints.md`.
 Check if idea was validated before blueprint:
 
 ```
-CHECK: does ai/idea-report.md exist?
+CHECK: does ai/PRD.md exist? (produced by /cortex-brief)
 ```
 
-If YES → read recommendation field:
+If YES → read the PRD. Extract recommendation from header.
 - `PROCEED` or `PROCEED WITH CAUTION` → continue normally
-- `PIVOT` → warn: `⚠️ Idea report recommends PIVOT. Address weaknesses before blueprinting. Type OVERRIDE to continue anyway.` Wait for input.
-- `ABANDON` → halt: `🚨 Idea report recommends ABANDON. Do not generate architecture for an abandoned idea. Run /cortex-intake to redefine the idea first.`
+- `PIVOT` → warn: `⚠️ cortex-brief recommends PIVOT. Address weaknesses before blueprinting. Type OVERRIDE to continue anyway.` Wait for input.
+- `ABANDON` → halt: `🚨 cortex-brief recommends ABANDON. Do not generate architecture for an abandoned idea. Run /cortex-brief to redefine the idea first.`
 
 If NO → output soft warning, do not block:
 ```
-⚠️  No idea-report.md found.
-    Skipping /cortex-validate increases risk of building the wrong thing.
-    Continue anyway? [Y] or run /cortex-validate first.
+⚠️  No ai/PRD.md found.
+    Skipping /cortex-brief increases risk of building the wrong thing.
+    Continue anyway? [Y] or run /cortex-brief first.
 ```
 Wait for user confirmation before continuing.
-User types Y or any text → continue. User runs /cortex-validate → respect its output.
+User types Y or any text → continue. User runs /cortex-brief → respect its output.
 
 These constraints directly influence:
 - Phase 3 (service architecture complexity — monolith vs services)
@@ -813,7 +813,7 @@ After the blueprint is approved, these domain skills exist to govern implementat
 | SaaS / Subscription | ✅ FULL | saas-subscriptions · saas-organizations |
 | Marketplace | ✅ FULL | All ecom-* skills + saas-organizations (for multi-vendor) |
 | Booking | ✅ FULL | booking-core |
-| Ride-Hailing | ✅ FULL | ride-hailing-core (driver states, trip states, geospatial matching, OTP pickup, fare calculation, payouts) |
+| Ride-Hailing | 📦 ARCHIVED | ride-hailing-core (archived — no active project; restore from adapters/domains/archive/ride-hailing/) |
 | FinTech / Wallet | ✅ FULL | fintech-ledger (double-entry bookkeeping, transfer atomicity, reversals, idempotency, KYC) |
 | Blog / CMS | ✅ FULL | cms-content (post state machine, slug immutability, revisions, scheduling, SEO, taxonomy, comments) |
 | EdTech | ⚠️ PARTIAL | Generic skills only — edtech-courses skill coming |
@@ -845,7 +845,7 @@ When `cortex-build` starts a phase, load the right adapter skills:
 | Organizations / Multi-tenancy | `adapters/domains/saas/saas-organizations.md` |
 | Booking / Availability | `adapters/domains/booking/booking-core.md` |
 | FinTech / Ledger / Wallet | `adapters/domains/fintech/fintech-ledger.md` |
-| Ride-Hailing / On-demand | `adapters/domains/ride-hailing/ride-hailing-core.md` |
+| Ride-Hailing / On-demand | `adapters/domains/archive/ride-hailing/ride-hailing-core.md` *(archived)* |
 | Blog / CMS / Content | `adapters/domains/cms/cms-content.md` |
 | Ops / Workflow | `adapters/domains/ops-workflow/ops-workflow-core.md` |
 

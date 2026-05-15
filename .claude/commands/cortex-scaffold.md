@@ -1,3 +1,4 @@
+<!-- LOOP_CAPABLE: true | LOOP_STEP: executing | LOOP_INVARIANTS: I-01, I-02, I-03 | LOOP_DOMAIN: (from scaffold target) -->
 ```
 ╔══════════════════════════════════════════════════════════════════════╗
 ║  CERT  /cortex-scaffold  |  v8.0  |  TIER: 3  |  BUDGET: LEAN      ║
@@ -11,7 +12,7 @@
 ║ CANNOT        ║ - Modify schema.prisma (use /cortex-migrate)        ║
 ║               ║ - Add business logic (use /cortex-build)            ║
 ║               ║ - Register module in AppModule (manual step)        ║
-║ REQUIRES      ║ - MASTER-v11.3.md loaded                            ║
+║ REQUIRES      ║ - MASTER.md loaded                            ║
 ║ OUTPUTS       ║ - Boilerplate module structure (5 files)            ║
 ║               ║ - Completion block: COMPLETE                        ║
 ╚═══════════════╩══════════════════════════════════════════════════════╝

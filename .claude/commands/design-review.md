@@ -10,7 +10,7 @@
 ║ CANNOT        ║ - Approve work that fails R1, R4, or R6             ║
 ║               ║ - Write production code                             ║
 ║               ║ - Override design rules without PA escalation       ║
-║ REQUIRES      ║ - MASTER-v11.3.md loaded                           ║
+║ REQUIRES      ║ - MASTER.md loaded                           ║
 ║               ║ - adapters/design/rules.md loaded                  ║
 ║               ║ - adapters/design/patterns.md loaded               ║
 ║ OUTPUTS       ║ - Audit score · Rule verdicts · Specific fixes      ║

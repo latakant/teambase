@@ -1,5 +1,5 @@
 ╔══════════════════════════════════════════════════════════════════════╗
-║  CORTEX  /cert-blueprint  |  v2.1  |  TIER: 1  |  BUDGET: LEAN     ║
+║  CORTEX  /cert-blueprint  |  v2.2  |  TIER: 1  |  BUDGET: LEAN     ║
 ╠═══════════════╦══════════════════════════════════════════════════════╣
 ║ LAYER SCOPE   ║ L0 (Pre-work Gate)                                   ║
 ║ AUTHORITY     ║ ANALYST                                              ║
@@ -8,6 +8,9 @@
 ║               ║ - Load development session sequence (Phase 0→6)     ║
 ║               ║ - Flag if work sequence is out of order              ║
 ║               ║ - Scan for blueprint violations in staged code       ║
+║               ║ - Run Decision Gate from ai/BLUEPRINT.md (--gate)   ║
+║               ║ - Check project blueprint vs template (--check)     ║
+║               ║ - Show upgrade diff for stale blueprint (--upgrade) ║
 ║ CANNOT        ║ - Write code or modify source files                  ║
 ║               ║ - Replace cert-enforce (they stack, not swap)        ║
 ║ WHEN TO RUN   ║ - Start of any feature, fix, or design session       ║
@@ -22,6 +25,116 @@
 **The full SDLC intelligence gate.**
 163 decisions across 11 blueprints. Loads what's relevant for your task.
 Stack adapters tell you HOW. Blueprints tell you WHAT and WHY — before you start.
+v2.2 adds: Project Blueprint Decision Gate — the first gate before any technical blueprint loads.
+
+---
+
+## MODES
+
+| Invocation | What it does |
+|-----------|-------------|
+| `/cert-blueprint` (default) | Step 0 project gate + load SDLC blueprints for current task |
+| `/cert-blueprint --gate "description"` | Run only the Decision Gate from ai/BLUEPRINT.md |
+| `/cert-blueprint --check` | Compare project blueprint cortex_version vs current Cortex version |
+| `/cert-blueprint --upgrade` | Show which new template sections the project blueprint is missing |
+
+---
+
+## STEP 0 — CORTEX RUNTIME GUARD
+
+Run: `node scripts/runtime-guard.js cert-blueprint`
+- Exit 0 → proceed to STEP 1
+- Exit 1 → WARN (PHASE_MISMATCH). Ask: "Phase mismatch detected. Continue? (YES to proceed)"
+  - YES → run: `node scripts/runtime-guard.js cert-blueprint --confirmed` → STEP 1
+  - Anything else → STOP
+- Exit 2 → HALT — do not proceed
+
+---
+
+## STEP 1 — Project Blueprint Gate (NEW in v2.2)
+
+**Runs before any technical blueprint loads.** If `ai/BLUEPRINT.md` does not exist, skip to Step 1.
+
+```bash
+cat ai/BLUEPRINT.md 2>/dev/null | head -5
+```
+
+If found:
+
+### 0a — Staleness check
+
+Read `ai/BLUEPRINT.md` Section 6 (Blueprint Health):
+- `cortex_version` < current Cortex version → warn: "Blueprint stale — run `/cert-blueprint --check`"
+- `last_evaluated` > 30 days ago → warn: "Blueprint not reviewed in 30+ days"
+- `gate_overrides` > 3 → warn: "High override count — revisit Phase Map"
+
+### 0b — Decision Gate (run for any proposed improvement)
+
+Read Section 4 (Decision Gate) from `ai/BLUEPRINT.md`. Run all 4 questions:
+
+```
+Q1 — Phase alignment: Is this in current phase scope?
+Q2 — Principle check: Does it violate any project Principle (P1–PN)?
+Q3 — Goal alignment: Does it serve Phase [current] primary goal?
+Q4 — Proportionality: Is effort within Phase [current] effort cap?
+```
+
+Output:
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROJECT BLUEPRINT GATE — [proposed change]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Q1 Phase:        [PASS | DEFER Phase N+1]
+Q2 Principles:   [PASS | REJECT P[N]: reason]
+Q3 Goal:         [PASS | DEFER]
+Q4 Effort cap:   [PASS (Xh of Yh cap) | DEFER]
+─────────────────────────────────────────────
+VERDICT:         [ACCEPT | DEFER Phase N | REJECT]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+If DEFER or REJECT: **stop here**. Do not load technical blueprints. Log in `ai/state/open-issues.json`.
+If ACCEPT: continue to Step 1 (SDLC blueprints).
+
+### 0c — --check mode
+
+Compare `cortex_version` in `ai/BLUEPRINT.md` Section 6 against current Cortex version.
+Read `adapters/blueprints/blueprint-project.md` → extract `template_version`.
+Read `ai/BLUEPRINT.md` → extract `template_version`.
+
+If project template_version < template file template_version:
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROJECT BLUEPRINT — STALE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Project blueprint version:  [X.Y]
+Template version:           [A.B]
+Gap:                        [list section names added in newer template]
+Action:                     run `/cert-blueprint --upgrade` to add missing sections
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+If up to date:
+```
+PROJECT BLUEPRINT — UP TO DATE (template v[X.Y] · cortex [version])
+```
+
+### 0d — --upgrade mode
+
+Read the template (`adapters/blueprints/blueprint-project.md`) and the project blueprint (`ai/BLUEPRINT.md`).
+Identify sections in the template that are missing from the project blueprint.
+
+For each missing section:
+```
+NEW SECTION: [section name]
+─────────────────────────────
+[section content from template, with FILL IN markers]
+─────────────────────────────
+Add this to ai/BLUEPRINT.md Section [N]. Fill in [FILL IN] fields.
+```
+
+The project's EXISTING decisions are NEVER modified. Only additive.
+After showing the diff: "Add these sections to ai/BLUEPRINT.md, fill in the [FILL IN] fields, then update Section 7 (Evolution History)."
 
 ---
 
@@ -50,7 +163,7 @@ Design + dev workflow: `C:\luv\Cortex\adapters\design\`
 
 ---
 
-## STEP 1 — Identify relevant blueprints
+## STEP 2 — Identify relevant blueprints
 
 Read the task description. Match to the blueprint map above. Load all that apply.
 
@@ -67,7 +180,7 @@ Deploy:            deployment
 
 ---
 
-## STEP 2 — Output active constraints
+## STEP 3 — Output active constraints
 
 For each loaded blueprint, surface the CRITICAL decisions only:
 
@@ -162,7 +275,7 @@ NEXT: cert-enforce <module> → build per blueprint sequence
 
 ---
 
-## STEP 3 — Session phase (if full feature work)
+## STEP 4 — Session phase (if full feature work)
 
 If the task is a full feature (not just a bug fix or refactor), output current phase:
 
@@ -181,7 +294,7 @@ Phase 6 — Ship:        cert-verify run, metrics synced?
 
 ---
 
-## STEP 4 — Scan (if --scan flag)
+## STEP 5 — Scan (if --scan flag)
 
 Grep recently modified files for blueprint violations:
 
